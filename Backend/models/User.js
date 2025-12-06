@@ -10,7 +10,7 @@ const UserSchema = new mongoose.Schema({
         required: true,
         unique: true,
     },
-    passwordHased: {
+    passwordHashed: {
         type: String,
         required: true,
     },
@@ -24,7 +24,7 @@ const UserSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ["leader", "member"],
+        enum: ["leader", "member", "admin"],
         default: "member",
     },
     createdAt: {
