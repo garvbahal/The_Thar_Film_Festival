@@ -137,6 +137,25 @@ exports.sendNotification = async (req, res) => {
 
         const notification = await Notification.create({ title, message });
 
+        const users = await User.find({
+            role: { $in: ["leader", "member"] },
+        });
+
+        const emails = users.map((user) => user.email);
+
+        for (const email of emails) {
+            await sendMail(
+                email,
+                `New Hackathon Notification: ${title}`,
+                `
+                    <h2>${title}</h2>
+                    <p>${message}</p>
+                    <br/>
+                    <p>Best Regards,<br/><b>Hackathon Admin Team</b></p>
+                `
+            );
+        }
+
         return res.status(200).json({
             success: true,
             message: "Notification send successfully",

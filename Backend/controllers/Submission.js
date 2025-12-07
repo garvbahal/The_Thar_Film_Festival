@@ -66,6 +66,31 @@ exports.submitLink = async (req, res) => {
 
         await team.save();
 
+        // 📩 Email all team members
+        for (const member of team.members) {
+            await sendMail(
+                member.email,
+                "Project Submission Successful",
+                `
+                    <h2>Submission Received 🎉</h2>
+
+                    <p>Your team <b>${
+                        team.teamName
+                    }</b> has successfully submitted the project.</p>
+
+                    <h3>Submitted Links:</h3>
+                    <p><b>Drive Link:</b> ${driveLink || "Not provided"}</p>
+                    <p><b>YouTube Link:</b> ${youtubeLink || "Not provided"}</p>
+
+                    <p><b>Submission Time:</b> ${new Date().toLocaleString()}</p>
+
+                    <br/>
+                    <p>Best of luck for the evaluation! 🚀</p>
+                    <p><b>Hackathon Admin Team</b></p>
+                `
+            );
+        }
+
         res.status(200).json({
             success: true,
             message: "Submission uploaded successfully",

@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const Team = require("../models/Team");
 require("dotenv").config();
+const sendMail = require("../utils/sendMail");
 
 exports.signUpLeader = async (req, res) => {
     try {
@@ -49,6 +50,19 @@ exports.signUpLeader = async (req, res) => {
 
         teamDetails.members.push(userDetails._id);
         await teamDetails.save();
+
+        await sendMail(
+            email,
+            "Registration Successful",
+            `
+                <h2>Welcome to the Hackathon 🎉</h2>
+                <p>Your registration is completed successfully.</p>
+                <p><b>Your Team Name:</b> ${teamName}</p>
+                <p><b>Your Team Code:</b> <span style="color:blue">${teamCode}</span></p>
+                <br/>
+                <p>Share this code with your teammates so they can join.</p>
+            `
+        );
 
         const jwtToken = jwt.sign(
             {
@@ -128,6 +142,25 @@ exports.memberSignUp = async (req, res) => {
 
         teamDetails.members.push(userDetails._id);
         await teamDetails.save();
+
+        await sendMail(
+            email,
+            "Team Joined Successfully",
+            `
+            <h2>Welcome to the Hackathon 🎉</h2>
+
+            <p>Your account has been created successfully and you have been added to a team.</p>
+
+            <p><b>Your Name:</b> ${name}</p>
+            <p><b>Team Name:</b> ${teamDetails.teamName}</p>
+            <p><b>Team Code:</b> <span style="color:blue;">${teamDetails.uniqueCode}</span></p>
+
+            <br/>
+            <p>If this was not you, please contact support immediately.</p>
+            <br/>
+            <p>Best wishes,<br/><b>Hackathon Admin Team</b></p>
+        `
+        );
 
         const jwtToken = jwt.sign(
             {
