@@ -22,7 +22,7 @@ exports.getAllTeams = async (req, res) => {
     }
 };
 
-exports.getTeamDetails = async (req, res) => {
+exports.getTeamDetailsAdmin = async (req, res) => {
     try {
         const { teamId } = req.params;
 
