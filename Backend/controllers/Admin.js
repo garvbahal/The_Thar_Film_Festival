@@ -108,12 +108,11 @@ exports.removeMemberFromTeam = async (req, res) => {
 
         await team.save();
 
-        user.team = null;
-        await user.save();
+        const userDetails = await User.findByIdAndDelete(userId);
 
         return res.status(200).json({
             success: true,
-            message: "User removed from team successfully",
+            message: "User removed successfully",
             team,
         });
     } catch (error) {
