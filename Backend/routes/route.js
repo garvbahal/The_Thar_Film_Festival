@@ -2,7 +2,8 @@ const experss = require("express");
 const router = experss.Router();
 
 const { auth, isParticipant, isAdmin } = require("../middlewares/auth");
-const { signUpLeader, memberSignUp, login } = require("../controllers/Auth");
+const { requestOTP, signup, login } = require("../controllers/Auth");
+const { verifyOtp } = require("../middlewares/verifyOTP");
 
 const { submitLink, getTeamDetails } = require("../controllers/Submission");
 const {
@@ -17,8 +18,8 @@ const {
 const { getAllNotifications, getBrochure } = require("../controllers/Home");
 
 // Auth Routes
-router.post("/signup/leader", signUpLeader);
-router.post("/signup/member", memberSignUp);
+router.post("/signup/request_otp", requestOTP);
+router.post("/signup/verifyOtp", verifyOtp, signup);
 router.post("/login", login);
 
 // Participant routes
