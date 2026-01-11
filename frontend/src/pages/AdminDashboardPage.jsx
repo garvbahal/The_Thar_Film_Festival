@@ -1,6 +1,9 @@
 import { useMemo, useState } from "react";
 import Button from "../components/Button.jsx";
 import Card from "../components/Card.jsx";
+import { useEffect } from "react";
+import api from "../utils/axios.jsx";
+import toast from "react-hot-toast";
 
 function Table({ columns, rows, renderRowActions }) {
     return (
@@ -54,52 +57,82 @@ function Table({ columns, rows, renderRowActions }) {
 }
 
 export default function AdminDashboardPage() {
+    const [participants, setParticipants] = useState([]);
     const [notifText, setNotifText] = useState("");
+    const [notifTitle, setNotifTitle] = useState("");
+    const [submissions, setSubmissions] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    const participants = useMemo(
-        () => [
-            {
-                id: "p1",
-                name: "Ayesha Khan",
-                email: "ayesha@college.edu",
-                college: "Thar Institute of Arts",
-                teamName: "Desert Frames",
-            },
-            {
-                id: "p2",
-                name: "Rohit Verma",
-                email: "rohit@college.edu",
-                college: "Thar Institute of Arts",
-                teamName: "Desert Frames",
-            },
-            {
-                id: "p3",
-                name: "Maya Singh",
-                email: "maya@uni.edu",
-                college: "City University",
-                teamName: "Midnight Reels",
-            },
-        ],
-        []
-    );
+    useEffect(() => {
+        const fetchAdminData = async () => {
+            try {
+                const teamRes = await api.get("/admin/teams");
+                const subsRes = await api.get("/admin/submissions");
 
-    const submissions = useMemo(
-        () => [
-            {
-                id: "s1",
-                teamName: "Desert Frames",
-                youtube: "https://youtube.com/watch?v=example",
-                drive: "https://drive.google.com/file/d/example",
-            },
-            {
-                id: "s2",
-                teamName: "Midnight Reels",
-                youtube: "https://youtube.com/watch?v=example2",
-                drive: "",
-            },
-        ],
-        []
-    );
+                const rows = teamRes.data.teams.flatMap((team) =>
+                    team.members.map((m) => ({
+                        id: m._id,
+                        name: m.name,
+                        email: m.email,
+                        college: team.collegeName,
+                        teamName: team.teamName,
+                        teamId: team._id,
+                    }))
+                );
+
+                setParticipants(rows);
+                setSubmissions(subsRes.data.submissions || []);
+            } catch (err) {
+                toast.error("Failed to load admin data");
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchAdminData();
+    }, []);
+
+    const removeMember = async (row) => {
+        if (!confirm(`Remove ${row.name} from ${row.teamName}`)) return;
+
+        const toastId = toast.loading("Removing pariticipant...");
+
+        try {
+            await api.delete(`/admin/team/${row.teamId}/member/${row.id}`);
+
+            setParticipants((prev) => prev.filter((p) => p.id !== row.id));
+
+            toast.success("Participant removed", { id: toastId });
+        } catch (err) {
+            toast.error(err.response?.data?.message || "Failed", {
+                id: toastId,
+            });
+        }
+    };
+
+    const sendNotification = async () => {
+        if (!notifText.trim() || !notifTitle.trim()) {
+            toast.error("Title and message both are required");
+            return;
+        }
+
+        const toastId = toast.loading("Sending notification...");
+
+        try {
+            await api.post("/admin/notification", {
+                title: notifTitle,
+                message: notifText,
+            });
+
+            toast.success("Notification sent", { id: toastId });
+
+            setNotifText("");
+            setNotifTitle("");
+        } catch (err) {
+            toast.error(err.response?.data?.message || "Failed to send", {
+                id: toastId,
+            });
+        }
+    };
 
     return (
         <main className="mx-auto max-w-6xl px-4 py-10">
@@ -116,7 +149,6 @@ export default function AdminDashboardPage() {
                         post notifications.
                     </p>
                 </div>
-                <Button variant="secondary">Logout (UI)</Button>
             </div>
 
             <div className="mt-8 grid gap-6 lg:grid-cols-3">
@@ -129,9 +161,7 @@ export default function AdminDashboardPage() {
                                 variant="secondary"
                                 className="px-3 py-1"
                                 type="button"
-                                onClick={() => {
-                                    // UI only
-                                }}
+                                onClick={() => removeMember(row)}
                             >
                                 Remove
                             </Button>
@@ -147,26 +177,37 @@ export default function AdminDashboardPage() {
                         Write a text notification to broadcast to all
                         participants.
                     </div>
-                    <div className="mt-4">
-                        <label className="block">
+                    <div className="space-y-3">
+                        <div>
                             <div className="mb-1 text-xs font-semibold tracking-wider text-zinc-300">
-                                Notification text
+                                Title
+                            </div>
+                            <input
+                                value={notifTitle}
+                                onChange={(e) => setNotifTitle(e.target.value)}
+                                className="w-full rounded-lg border border-white/10 bg-festival-panel px-3 py-2 text-sm text-white"
+                                placeholder="e.g. Submission Deadline"
+                            />
+                        </div>
+
+                        <div>
+                            <div className="mb-1 text-xs font-semibold tracking-wider text-zinc-300">
+                                Message
                             </div>
                             <textarea
                                 value={notifText}
                                 onChange={(e) => setNotifText(e.target.value)}
-                                rows={6}
-                                className="w-full resize-none rounded-lg border border-white/10 bg-festival-panel px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-festival-accent/60 focus:outline-none focus:ring-2 focus:ring-festival-accent/20"
-                                placeholder="e.g., Final submission deadline is Friday 5 PM."
+                                rows={5}
+                                className="w-full resize-none rounded-lg border border-white/10 bg-festival-panel px-3 py-2 text-sm text-white"
+                                placeholder="Write detailed notification..."
                             />
-                        </label>
+                        </div>
                     </div>
+
                     <div className="mt-3 flex gap-3">
                         <Button
                             type="button"
-                            onClick={() => {
-                                // UI only
-                            }}
+                            onClick={sendNotification}
                             className="w-full"
                         >
                             Post
@@ -174,7 +215,10 @@ export default function AdminDashboardPage() {
                         <Button
                             type="button"
                             variant="secondary"
-                            onClick={() => setNotifText("")}
+                            onClick={() => {
+                                setNotifText("");
+                                setNotifTitle("");
+                            }}
                             className="w-full"
                         >
                             Clear
@@ -199,14 +243,14 @@ export default function AdminDashboardPage() {
                                         <div className="text-xs font-semibold tracking-widest text-zinc-400">
                                             YOUTUBE
                                         </div>
-                                        {s.youtube ? (
+                                        {s.submission.youtubeLink ? (
                                             <a
-                                                href={s.youtube}
+                                                href={s.submission.youtubeLink}
                                                 target="_blank"
                                                 rel="noreferrer"
                                                 className="mt-1 block truncate text-festival-accent hover:underline"
                                             >
-                                                {s.youtube}
+                                                {s.submission.youtubeLink}
                                             </a>
                                         ) : (
                                             <div className="mt-1 text-zinc-500">
@@ -218,14 +262,14 @@ export default function AdminDashboardPage() {
                                         <div className="text-xs font-semibold tracking-widest text-zinc-400">
                                             DRIVE
                                         </div>
-                                        {s.drive ? (
+                                        {s.submission.driveLink ? (
                                             <a
-                                                href={s.drive}
+                                                href={s.submission.driveLink}
                                                 target="_blank"
                                                 rel="noreferrer"
                                                 className="mt-1 block truncate text-festival-accent hover:underline"
                                             >
-                                                {s.drive}
+                                                {s.submission.driveLink}
                                             </a>
                                         ) : (
                                             <div className="mt-1 text-zinc-500">
