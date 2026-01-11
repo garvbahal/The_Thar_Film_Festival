@@ -1,9 +1,14 @@
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import Button from "../components/Button.jsx";
 import Input from "../components/Input.jsx";
+import api from "../utils/axios.jsx";
+import toast from "react-hot-toast";
+import { useAuth } from "../context/AuthContext.jsx";
 
 export default function SignupPage() {
+    const navigate = useNavigate();
+    const { fetchUser, setUser } = useAuth();
     const [form, setForm] = useState({
         name: "",
         college: "",
@@ -14,17 +19,84 @@ export default function SignupPage() {
     });
 
     const [otpSent, setOtpSent] = useState(false);
-    const [otp, setOtp] = useState("");
+    const [verifying, setVerifying] = useState(false);
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    const canSendOtp = useMemo(() => {
-        return (
-            form.name &&
-            form.college &&
-            form.email &&
-            form.password &&
-            form.teamName
-        );
-    }, [form]);
+    const [otp, setOtp] = useState("");
+    const [loading, setLoading] = useState(false);
+    const canSendOtp =
+        form.name.trim().length > 1 &&
+        form.college.trim().length > 2 &&
+        emailRegex.test(form.email) &&
+        form.password.length >= 8 &&
+        form.teamName.trim().length > 1;
+
+    const handleSendOtp = async () => {
+        if (!canSendOtp) return;
+
+        const toastId = toast.loading("Sending OTP...");
+        setLoading(true);
+
+        try {
+            console.log("Going to backend");
+            setVerifying(true);
+            console.log(
+                form.email,
+                " ",
+                form.password,
+                " ",
+                form.name,
+                " ",
+                form.college
+            );
+            await api.post("/signup/request_otp", {
+                name: form.name,
+                collegeName: form.college,
+                email: form.email,
+                password: form.password,
+                teamName: form.teamName,
+                teamCode: form.teamCode || null,
+            });
+
+            console.log("Coming from backend");
+
+            toast.success("OTP sent to the email", { id: toastId });
+            setOtpSent(true);
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Failed to send OTP", {
+                id: toastId,
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleVerifyOtp = async () => {
+        if (!otp) {
+            toast.error("OTP required");
+            return;
+        }
+
+        const toastId = toast.loading("Verifying OTP...");
+        setLoading(true);
+        try {
+            const { data } = await api.post("/signup/verifyOtp", {
+                email: form.email,
+                otp,
+            });
+
+            toast.success("Account created successfully", { id: toastId });
+            setVerifying(false);
+            navigate("/login");
+        } catch (error) {
+            toast.error(
+                error.response?.data?.message || "OTP verification failed",
+                { id: toastId }
+            );
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <main className="min-h-screen bg-festival-bg">
@@ -134,11 +206,8 @@ export default function SignupPage() {
                                 <Button
                                     type="button"
                                     variant={otpSent ? "secondary" : "primary"}
-                                    disabled={!canSendOtp}
-                                    onClick={() => {
-                                        if (!canSendOtp) return;
-                                        setOtpSent(true);
-                                    }}
+                                    disabled={!canSendOtp || loading || otpSent}
+                                    onClick={handleSendOtp}
                                     className={!canSendOtp ? "opacity-60" : ""}
                                 >
                                     Send OTP
@@ -157,17 +226,23 @@ export default function SignupPage() {
                                         <Input
                                             label="Enter OTP"
                                             value={otp}
-                                            onChange={(e) =>
-                                                setOtp(e.target.value)
-                                            }
+                                            inputMode="numeric"
+                                            onChange={(e) => {
+                                                const value =
+                                                    e.target.value.replace(
+                                                        /\D/g,
+                                                        ""
+                                                    );
+                                                if (value.length <= 6)
+                                                    setOtp(value);
+                                            }}
                                             placeholder="123456"
                                             className="tracking-[0.35em]"
                                         />
                                         <Button
                                             type="button"
-                                            onClick={() => {
-                                                // UI only
-                                            }}
+                                            onClick={handleVerifyOtp}
+                                            disabled={loading}
                                             className="w-full md:w-auto"
                                         >
                                             Verify OTP & Create Account

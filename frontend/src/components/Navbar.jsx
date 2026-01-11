@@ -1,9 +1,18 @@
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 const navLinkBase =
     "text-sm font-semibold tracking-wide text-zinc-200 hover:text-white transition-colors";
 
 export default function Navbar() {
+    const { user, loading, logout } = useAuth();
+    const navigate = useNavigate();
+
+    const handleLogout = async () => {
+        await logout();
+        navigate("/login");
+    };
+
     return (
         <header className="sticky top-0 z-50 border-b border-white/10 bg-festival-bg/80 backdrop-blur">
             <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
@@ -23,52 +32,46 @@ export default function Navbar() {
                     </div>
                 </Link>
 
-                <nav className="hidden items-center gap-5 md:flex">
-                    <NavLink
-                        to="/"
-                        className={({ isActive }) =>
-                            `${navLinkBase} ${
-                                isActive ? "text-festival-accent" : ""
-                            }`
-                        }
-                    >
-                        Home
-                    </NavLink>
-                    <NavLink
-                        to="/participant"
-                        className={({ isActive }) =>
-                            `${navLinkBase} ${
-                                isActive ? "text-festival-accent" : ""
-                            }`
-                        }
-                    >
-                        Participant
-                    </NavLink>
-                    <NavLink
-                        to="/admin"
-                        className={({ isActive }) =>
-                            `${navLinkBase} ${
-                                isActive ? "text-festival-accent" : ""
-                            }`
-                        }
-                    >
-                        Admin
-                    </NavLink>
-                </nav>
-
                 <div className="flex items-center gap-2">
-                    <Link
-                        to="/login"
-                        className="rounded-lg border border-white/10 bg-festival-panel px-3 py-2 text-sm font-semibold text-zinc-200 hover:bg-festival-card"
-                    >
-                        Login
-                    </Link>
-                    <Link
-                        to="/signup"
-                        className="rounded-lg bg-festival-accent px-3 py-2 text-sm font-extrabold text-black hover:brightness-110"
-                    >
-                        Register
-                    </Link>
+                    {loading ? null : user ? (
+                        <>
+                            {/* Logout */}
+                            <button
+                                className="rounded-lg border border-white/10 bg-festival-panel px-3 py-2 text-sm font-semibold text-zinc-200 hover:bg-festival-card"
+                                onClick={handleLogout}
+                            >
+                                Logout
+                            </button>
+                            {/* Dashboard */}
+                            <button
+                                className="rounded-lg bg-festival-accent px-3 py-2 text-sm font-extrabold text-black hover:brightness-110"
+                                onClick={(e) => {
+                                    if (user.role === "admin") {
+                                        navigate("/admin");
+                                    } else {
+                                        navigate("/participant");
+                                    }
+                                }}
+                            >
+                                Dashboard
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <Link
+                                to="/login"
+                                className="rounded-lg border border-white/10 bg-festival-panel px-3 py-2 text-sm font-semibold text-zinc-200 hover:bg-festival-card"
+                            >
+                                Login
+                            </Link>
+                            <Link
+                                to="/signup"
+                                className="rounded-lg bg-festival-accent px-3 py-2 text-sm font-extrabold text-black hover:brightness-110"
+                            >
+                                Register
+                            </Link>
+                        </>
+                    )}
                 </div>
             </div>
         </header>

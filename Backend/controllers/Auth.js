@@ -365,19 +365,9 @@ exports.signup = async (req, res) => {
             );
         }
 
-        const token = jwt.sign(
-            {
-                id: userDetails._id,
-                role: userDetails.role,
-            },
-            process.env.JWT_SECRET,
-            { expiresIn: "7d" }
-        );
-
         return res.status(200).json({
             success: true,
             message: "signup successfull",
-            token,
             user: userDetails,
             team: teamDetails,
         });
