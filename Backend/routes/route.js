@@ -2,7 +2,7 @@ const experss = require("express");
 const router = experss.Router();
 
 const { auth, isParticipant, isAdmin } = require("../middlewares/auth");
-const { requestOTP, signup, login } = require("../controllers/Auth");
+const { requestOTP, signup, login, logout } = require("../controllers/Auth");
 const { verifyOtp } = require("../middlewares/verifyOTP");
 
 const { submitLink, getTeamDetails } = require("../controllers/Submission");
@@ -21,6 +21,7 @@ const { getAllNotifications, getBrochure } = require("../controllers/Home");
 router.post("/signup/request_otp", requestOTP);
 router.post("/signup/verifyOtp", verifyOtp, signup);
 router.post("/login", login);
+router.post("/logout", logout);
 
 // Participant routes
 router.get("/team", auth, isParticipant, getTeamDetails);

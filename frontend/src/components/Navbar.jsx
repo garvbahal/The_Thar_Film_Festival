@@ -1,6 +1,6 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-
+import toast from "react-hot-toast";
 const navLinkBase =
     "text-sm font-semibold tracking-wide text-zinc-200 hover:text-white transition-colors";
 
@@ -10,7 +10,8 @@ export default function Navbar() {
 
     const handleLogout = async () => {
         await logout();
-        navigate("/login");
+        toast.success("Logout successfull");
+        navigate("/");
     };
 
     return (

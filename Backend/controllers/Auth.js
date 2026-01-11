@@ -438,3 +438,17 @@ exports.login = async (req, res) => {
         });
     }
 };
+
+exports.logout = async (req, res) => {
+    return res
+        .status(200)
+        .clearCookie("token", {
+            httpOnly: true,
+            secure: false,
+            sameSite: "lax",
+        })
+        .json({
+            success: true,
+            message: "Logged out successfully",
+        });
+};
