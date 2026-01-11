@@ -1,42 +1,65 @@
-import { useMemo, useState } from "react";
+import { useState, useEffect } from "react";
 import Button from "../components/Button.jsx";
 import Card from "../components/Card.jsx";
 import Input from "../components/Input.jsx";
+import { useNavigate } from "react-router-dom";
+import api from "../utils/axios.jsx";
+import toast from "react-hot-toast";
 
 export default function ParticipantDashboardPage() {
+    const navigate = useNavigate();
+
+    const [team, setTeam] = useState(null);
+    const [notifications, setNotifications] = useState([]);
+
     const [youtubeLink, setYoutubeLink] = useState("");
     const [driveLink, setDriveLink] = useState("");
 
-    const team = useMemo(
-        () => ({
-            teamName: "Desert Frames",
-            members: [
-                "Ayesha Khan (Lead)",
-                "Rohit Verma",
-                "Sneha Patel",
-                "Faizan Ali",
-            ],
-        }),
-        []
-    );
+    const [loading, setLoading] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
 
-    const notifications = useMemo(
-        () => [
-            {
-                id: "n1",
-                title: "Submission Guidelines",
-                body: "Ensure your YouTube link is unlisted and accessible. Drive links must have viewer access enabled.",
-                time: "Today, 6:30 PM",
-            },
-            {
-                id: "n2",
-                title: "Deadline Reminder",
-                body: "Submit your final links before the deadline. Late submissions may not be evaluated.",
-                time: "Yesterday, 9:15 AM",
-            },
-        ],
-        []
-    );
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const teamRes = await api.get("/team");
+                const notifRes = await api.get("/getnotifications");
+
+                setTeam(teamRes.data.team);
+                setNotifications(notifRes.data.notifications || []);
+            } catch (err) {
+                console.error(err);
+                navigate("/login");
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
+
+    const handleSubmit = async () => {
+        if (!youtubeLink && !driveLink) {
+            toast.error("Provide at least one link");
+            return;
+        }
+        const toastId = toast.loading("Saving submission...");
+        setSubmitting(true);
+        try {
+            await api.post("/submit", {
+                youtubeLink,
+                driveLink,
+            });
+            toast.success("submission saved successfully", { id: toastId });
+        } catch (err) {
+            toast.error(
+                err.response?.data?.message || "Failed to save submission",
+                { id: toastId }
+            );
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    if (loading) return null;
 
     return (
         <main className="mx-auto max-w-6xl px-4 py-10">
@@ -53,7 +76,6 @@ export default function ParticipantDashboardPage() {
                         track admin notifications.
                     </p>
                 </div>
-                <Button variant="secondary">Logout (UI)</Button>
             </div>
 
             <div className="mt-8 grid gap-6 lg:grid-cols-3">
@@ -75,7 +97,7 @@ export default function ParticipantDashboardPage() {
                                     key={m}
                                     className="rounded-xl border border-white/10 bg-festival-panel px-3 py-2 text-sm text-zinc-200"
                                 >
-                                    {m}
+                                    {m.name}
                                 </li>
                             ))}
                         </ul>
@@ -101,11 +123,10 @@ export default function ParticipantDashboardPage() {
                     <div className="mt-4 flex flex-wrap gap-3">
                         <Button
                             type="button"
-                            onClick={() => {
-                                // UI only
-                            }}
+                            onClick={handleSubmit}
+                            disabled={submitting}
                         >
-                            Save Links
+                            {submitting ? "Saving..." : "Save Links"}
                         </Button>
                         <Button
                             variant="secondary"
@@ -149,11 +170,11 @@ export default function ParticipantDashboardPage() {
                                         {n.title}
                                     </div>
                                     <div className="text-xs text-zinc-500">
-                                        {n.time}
+                                        {new Date(n.sendAt).toLocaleString()}
                                     </div>
                                 </div>
                                 <div className="mt-2 text-sm leading-6 text-zinc-300">
-                                    {n.body}
+                                    {n.message}
                                 </div>
                             </article>
                         ))}

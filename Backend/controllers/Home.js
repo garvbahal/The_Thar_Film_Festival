@@ -5,7 +5,6 @@ const Brochure = require("../models/Brochure");
 exports.getAllNotifications = async (req, res) => {
     try {
         const notifications = await Notification.find()
-            .select("title message")
             .sort({ sendAt: -1 })
             .exec();
 
