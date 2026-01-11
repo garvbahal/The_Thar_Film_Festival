@@ -27,6 +27,12 @@ router.get("/team", auth, isParticipant, getTeamDetails);
 router.post("/submit", auth, isParticipant, submitLink);
 
 // Admin Routes
+router.get("/me", auth, (req, res) => {
+    return res.status(200).json({
+        success: true,
+        user: req.user,
+    });
+});
 router.get("/admin/teams", auth, isAdmin, getAllTeams);
 router.get("/admin/team/:teamId", auth, isAdmin, getTeamDetailsAdmin);
 router.get("/admin/submissions", auth, isAdmin, getAllSubmissions);

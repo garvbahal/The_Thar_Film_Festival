@@ -1,1 +1,13 @@
 @import "tailwindcss";
+
+@theme {
+    /* Colors */
+    --color-festival-bg: #0a0a0a;
+    --color-festival-panel: #111111;
+    --color-festival-card: #1a1a1a;
+    --color-festival-accent: #f6c90e;
+
+    /* Box Shadow */
+    --shadow-glow: 0 0 0 1px rgba(246, 201, 14, 0.25),
+        0 0 32px rgba(246, 201, 14, 0.08);
+}
