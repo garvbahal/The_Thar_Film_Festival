@@ -160,7 +160,7 @@ export default function AdminDashboardPage() {
                         renderRowActions={(row) => (
                             <Button
                                 variant="secondary"
-                                className="px-3 py-1"
+                                className="px-3 py-1 cursor-pointer"
                                 type="button"
                                 onClick={() => removeMember(row)}
                             >
@@ -209,7 +209,7 @@ export default function AdminDashboardPage() {
                         <Button
                             type="button"
                             onClick={sendNotification}
-                            className="w-full"
+                            className="w-full cursor-pointer"
                         >
                             Post
                         </Button>
@@ -220,7 +220,7 @@ export default function AdminDashboardPage() {
                                 setNotifText("");
                                 setNotifTitle("");
                             }}
-                            className="w-full"
+                            className="w-full cursor-pointer"
                         >
                             Clear
                         </Button>

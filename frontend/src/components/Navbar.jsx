@@ -38,14 +38,14 @@ export default function Navbar() {
                         <>
                             {/* Logout */}
                             <button
-                                className="rounded-lg border border-white/10 bg-festival-panel px-3 py-2 text-sm font-semibold text-zinc-200 hover:bg-festival-card"
+                                className="rounded-lg border border-white/10 bg-festival-panel px-3 py-2 text-sm font-semibold text-zinc-200 hover:bg-festival-card cursor-pointer"
                                 onClick={handleLogout}
                             >
                                 Logout
                             </button>
                             {/* Dashboard */}
                             <button
-                                className="rounded-lg bg-festival-accent px-3 py-2 text-sm font-extrabold text-black hover:brightness-110"
+                                className="rounded-lg bg-festival-accent px-3 py-2 text-sm font-extrabold text-black hover:brightness-110 cursor-pointer"
                                 onClick={(e) => {
                                     if (user.role === "admin") {
                                         navigate("/admin");

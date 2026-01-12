@@ -11,9 +11,10 @@ export default function Button({
         "inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-extrabold transition focus:outline-none focus:ring-2 focus:ring-festival-accent/40";
 
     const variants = {
-        primary: "bg-festival-accent text-black hover:brightness-110",
+        primary:
+            "bg-festival-accent text-black hover:brightness-110 cursor-pointer",
         secondary:
-            "border border-white/10 bg-festival-panel text-zinc-200 hover:bg-festival-card",
+            "border border-white/10 bg-festival-panel text-zinc-200 hover:bg-festival-card cursor-pointer",
         ghost: "text-zinc-200 hover:text-white hover:bg-white/5",
     };
 

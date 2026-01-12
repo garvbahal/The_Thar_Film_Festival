@@ -112,7 +112,10 @@ export default function LoginPage() {
                                 placeholder="••••••••"
                             />
 
-                            <Button className="w-full" type="submit">
+                            <Button
+                                className="w-full cursor-pointer"
+                                type="submit"
+                            >
                                 Login
                             </Button>
 
