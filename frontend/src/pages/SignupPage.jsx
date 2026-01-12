@@ -24,12 +24,6 @@ export default function SignupPage() {
 
     const [otp, setOtp] = useState("");
     const [loading, setLoading] = useState(false);
-    const canSendOtp =
-        form.name.trim().length > 1 &&
-        form.college.trim().length > 2 &&
-        emailRegex.test(form.email) &&
-        form.password.length >= 8 &&
-        form.teamName.trim().length > 1;
 
     const handleSendOtp = async () => {
         if (!canSendOtp) return;
@@ -98,6 +92,47 @@ export default function SignupPage() {
         }
     };
 
+    const getPasswordStrength = (password) => {
+        let score = 0;
+        if (password.length >= 8) score++;
+        if (/[A-Z]/.test(password)) score++;
+        if (/[0-9]/.test(password)) score++;
+        if (/[^A-Za-z0-9]/.test(password)) score++;
+
+        if (score <= 1)
+            return {
+                label: "Weak",
+                color: "bg-red-500",
+                value: 25,
+            };
+        if (score === 2)
+            return {
+                label: "Fair",
+                color: "bg-yellow-500",
+                value: 50,
+            };
+        if (score === 3)
+            return {
+                label: "Good",
+                color: "bg-blue-500",
+                value: 75,
+            };
+        return {
+            label: "Strong",
+            color: "bg-green-500",
+            value: 100,
+        };
+    };
+
+    const passwordStrength = getPasswordStrength(form.password);
+
+    const canSendOtp =
+        form.name.trim().length > 1 &&
+        form.college.trim().length > 2 &&
+        emailRegex.test(form.email) &&
+        passwordStrength.label !== "Weak" &&
+        form.teamName.trim().length > 1;
+
     return (
         <main className="min-h-screen bg-festival-bg">
             <div className="mx-auto max-w-6xl px-4 py-10">
@@ -163,18 +198,77 @@ export default function SignupPage() {
                                 }
                                 placeholder="you@college.edu"
                             />
-                            <Input
-                                label="Password"
-                                type="password"
-                                value={form.password}
-                                onChange={(e) =>
-                                    setForm((s) => ({
-                                        ...s,
-                                        password: e.target.value,
-                                    }))
-                                }
-                                placeholder="Create a strong password"
-                            />
+                            <div>
+                                <Input
+                                    label="Password"
+                                    type="password"
+                                    value={form.password}
+                                    onChange={(e) =>
+                                        setForm((s) => ({
+                                            ...s,
+                                            password: e.target.value,
+                                        }))
+                                    }
+                                    placeholder="Create a strong password"
+                                />
+
+                                {form.password && (
+                                    <div className="mt-2 space-y-2">
+                                        {/* Strength bar */}
+                                        <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
+                                            <div
+                                                className={`h-full transition-all duration-300 ${passwordStrength.color}`}
+                                                style={{
+                                                    width: `${passwordStrength.value}%`,
+                                                }}
+                                            />
+                                        </div>
+
+                                        {/* Strength label */}
+                                        <div className="flex items-center justify-between text-xs">
+                                            <span className="text-zinc-400">
+                                                Password strength
+                                            </span>
+                                            <span className="font-semibold text-white">
+                                                {passwordStrength.label}
+                                            </span>
+                                        </div>
+
+                                        {/* Rules */}
+                                        <ul className="space-y-1 text-xs text-zinc-400">
+                                            <li
+                                                className={
+                                                    form.password.length >= 8
+                                                        ? "text-green-400"
+                                                        : ""
+                                                }
+                                            >
+                                                • At least 8 characters
+                                            </li>
+                                            <li
+                                                className={
+                                                    /[0-9]/.test(form.password)
+                                                        ? "text-green-400"
+                                                        : ""
+                                                }
+                                            >
+                                                • Contains a number
+                                            </li>
+                                            <li
+                                                className={
+                                                    /[^A-Za-z0-9]/.test(
+                                                        form.password
+                                                    )
+                                                        ? "text-green-400"
+                                                        : ""
+                                                }
+                                            >
+                                                • Contains a special character
+                                            </li>
+                                        </ul>
+                                    </div>
+                                )}
+                            </div>
 
                             <div className="grid gap-4 md:grid-cols-2">
                                 <Input
