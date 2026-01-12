@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Button from "../components/Button.jsx";
 import Card from "../components/Card.jsx";
 import { useEffect } from "react";
@@ -10,7 +10,7 @@ function Table({ columns, rows, renderRowActions }) {
         <div className="overflow-hidden rounded-2xl border border-white/10">
             <div className="overflow-x-auto">
                 <table className="min-w-full text-left text-sm">
-                    <thead className="bg-festival-panel">
+                    <thead className="sticky top-0 bg-festival-panel z-10">
                         <tr>
                             {columns.map((c) => (
                                 <th
@@ -62,6 +62,7 @@ export default function AdminDashboardPage() {
     const [notifTitle, setNotifTitle] = useState("");
     const [submissions, setSubmissions] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState("");
 
     const fetchAdminData = async () => {
         try {
@@ -135,9 +136,22 @@ export default function AdminDashboardPage() {
         }
     };
 
+    const filteredParticipants = participants.filter((p) => {
+        if (!searchTerm.trim()) return true;
+
+        const q = searchTerm.toLowerCase();
+
+        return (
+            p.name?.toLowerCase().includes(q) ||
+            p.email?.toLowerCase().includes(q) ||
+            p.college?.toLowerCase().includes(q) ||
+            p.teamName?.toLowerCase().includes(q)
+        );
+    });
+
     return (
         <main className="mx-auto max-w-6xl px-4 py-10">
-            <div className="flex flex-wrap items-end justify-between gap-4">
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                     <div className="text-xs font-semibold tracking-widest text-zinc-400">
                         ADMIN DASHBOARD
@@ -154,9 +168,32 @@ export default function AdminDashboardPage() {
 
             <div className="mt-8 grid gap-6 lg:grid-cols-3">
                 <Card title="PARTICIPANTS" className="lg:col-span-2">
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <div className="text-xs font-semibold tracking-widest text-zinc-400">
+                                SEARCH PARTICIPANTS
+                            </div>
+                            <input
+                                type="text"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                placeholder="Name, email, college, team..."
+                                className="mt-2 w-full sm:max-w-md md:max-w-lg rounded-xl border border-white/10 bg-festival-panel px-4 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-festival-accent/30"
+                            />
+                        </div>
+
+                        <div className="text-xs text-zinc-400">
+                            Showing{" "}
+                            <span className="font-semibold text-white">
+                                {filteredParticipants.length}
+                            </span>{" "}
+                            participants
+                        </div>
+                    </div>
+
                     <Table
                         columns={["Name", "Email", "College", "Team Name"]}
-                        rows={participants}
+                        rows={filteredParticipants}
                         renderRowActions={(row) => (
                             <Button
                                 variant="secondary"
@@ -168,9 +205,12 @@ export default function AdminDashboardPage() {
                             </Button>
                         )}
                     />
-                    <div className="mt-3 text-xs text-zinc-500">
-                        Actions are UI-only. Wire to backend with Axios.
-                    </div>
+
+                    {filteredParticipants.length === 0 && (
+                        <div className="py-6 text-center text-sm text-zinc-500">
+                            No participants match your search.
+                        </div>
+                    )}
                 </Card>
 
                 <Card title="NOTIFICATIONS" className="lg:col-span-1">
@@ -186,7 +226,7 @@ export default function AdminDashboardPage() {
                             <input
                                 value={notifTitle}
                                 onChange={(e) => setNotifTitle(e.target.value)}
-                                className="w-full rounded-lg border border-white/10 bg-festival-panel px-3 py-2 text-sm text-white"
+                                className="w-full rounded-lg  border border-white/10 bg-festival-panel px-3 py-2 text-sm  text-white"
                                 placeholder="e.g. Submission Deadline"
                             />
                         </div>
@@ -199,7 +239,7 @@ export default function AdminDashboardPage() {
                                 value={notifText}
                                 onChange={(e) => setNotifText(e.target.value)}
                                 rows={5}
-                                className="w-full resize-none rounded-lg border border-white/10 bg-festival-panel px-3 py-2 text-sm text-white"
+                                className="w-full resize-none rounded-lg border border-white/10  bg-festival-panel px-3 py-2 text-sm text-white"
                                 placeholder="Write detailed notification..."
                             />
                         </div>
