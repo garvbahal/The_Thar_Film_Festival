@@ -63,31 +63,32 @@ export default function AdminDashboardPage() {
     const [submissions, setSubmissions] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    const fetchAdminData = async () => {
+        try {
+            const teamRes = await api.get("/admin/teams");
+            const subsRes = await api.get("/admin/submissions");
+
+            const rows = teamRes.data.teams.flatMap((team) =>
+                team.members.map((m) => ({
+                    id: m._id,
+                    name: m.name,
+                    email: m.email,
+                    college: team.collegeName,
+                    teamName: team.teamName,
+                    teamId: team._id,
+                }))
+            );
+
+            setParticipants(rows);
+            setSubmissions(subsRes.data.submissions || []);
+        } catch (err) {
+            toast.error("Failed to load admin data");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const fetchAdminData = async () => {
-            try {
-                const teamRes = await api.get("/admin/teams");
-                const subsRes = await api.get("/admin/submissions");
-
-                const rows = teamRes.data.teams.flatMap((team) =>
-                    team.members.map((m) => ({
-                        id: m._id,
-                        name: m.name,
-                        email: m.email,
-                        college: team.collegeName,
-                        teamName: team.teamName,
-                        teamId: team._id,
-                    }))
-                );
-
-                setParticipants(rows);
-                setSubmissions(subsRes.data.submissions || []);
-            } catch (err) {
-                toast.error("Failed to load admin data");
-            } finally {
-                setLoading(false);
-            }
-        };
         fetchAdminData();
     }, []);
 
@@ -99,7 +100,7 @@ export default function AdminDashboardPage() {
         try {
             await api.delete(`/admin/team/${row.teamId}/member/${row.id}`);
 
-            setParticipants((prev) => prev.filter((p) => p.id !== row.id));
+            await fetchAdminData();
 
             toast.success("Participant removed", { id: toastId });
         } catch (err) {

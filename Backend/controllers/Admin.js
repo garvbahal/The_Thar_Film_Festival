@@ -102,6 +102,16 @@ exports.removeMemberFromTeam = async (req, res) => {
             });
         }
 
+        if (team.members.length === 1) {
+            await User.findByIdAndDelete(userId);
+            await Team.findByIdAndDelete(teamId);
+
+            return res.status(200).json({
+                success: true,
+                message: "User removed and team deleted(last member)",
+            });
+        }
+
         team.members = team.members.filter((memberId) => {
             return memberId.toString() !== userId.toString();
         });
