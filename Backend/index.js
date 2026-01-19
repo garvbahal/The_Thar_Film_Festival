@@ -1,12 +1,13 @@
 const express = require("express");
 const app = express();
 
+app.set("trust proxy", 1);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 const route = require("./routes/route");
 const cookieParser = require("cookie-parser");
 app.use(cookieParser());
-require("dotenv").config();
 const { dbConnect } = require("./config/database");
 const PORT = process.env.PORT || 4000;
 const cors = require("cors");
@@ -15,7 +16,7 @@ app.use(
     cors({
         origin: process.env.FRONTEND_URL,
         credentials: true,
-    })
+    }),
 );
 
 app.use("/api/v1/", route);

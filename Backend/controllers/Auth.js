@@ -229,7 +229,7 @@ exports.requestOTP = async (req, res) => {
                 data: req.body,
                 expiresAt: Date.now() + 5 * 60 * 1000,
             },
-            { upsert: true }
+            { upsert: true },
         );
 
         await sendMail(
@@ -239,7 +239,7 @@ exports.requestOTP = async (req, res) => {
             <h2>Email Verification</h2>
             <p>Your OTP is <b>${otp}</b></p>
             <p>This OTP is valid for 5 minutes.</p>
-            `
+            `,
         );
 
         return res.status(200).json({
@@ -319,7 +319,7 @@ exports.signup = async (req, res) => {
                 <p>You have successfully joined a team.</p>
                 <p><b>Team Name:</b> ${teamDetails.teamName}</p>
                 <p><b>Team Code:</b> ${teamDetails.uniqueCode}</p>
-                `
+                `,
             );
         } else {
             // Leader signup
@@ -361,7 +361,7 @@ exports.signup = async (req, res) => {
                 <p>You have successfully created a team.</p>
                 <p><b>Team Name:</b> ${teamName}</p>
                 <p><b>Team Code:</b> ${uniqueCode}</p>
-                `
+                `,
             );
         }
 
@@ -412,8 +412,8 @@ exports.login = async (req, res) => {
             const options = {
                 expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
                 httpOnly: true,
-                sameSite: "lax",
-                secure: false,
+                sameSite: "none",
+                secure: true,
             };
 
             userDetails.passwordHashed = undefined;
@@ -444,8 +444,8 @@ exports.logout = async (req, res) => {
         .status(200)
         .clearCookie("token", {
             httpOnly: true,
-            secure: false,
-            sameSite: "lax",
+            secure: true,
+            sameSite: "none",
         })
         .json({
             success: true,
