@@ -4,6 +4,10 @@ import Team from "../models/Team";
 import Brochure from "../models/Brochure";
 import type { Request, Response } from "express";
 import sendMail from "../utils/sendMail";
+import {
+  sendNotificationSchema,
+  uploadOrUpdateBrochureSchema,
+} from "../schemas/admin.schema";
 
 export const getAllTeams = async (req: Request, res: Response) => {
   try {
@@ -73,6 +77,13 @@ export const removeMemberFromTeam = async (req: Request, res: Response) => {
   try {
     const { teamId, userId } = req.params;
 
+    if (!userId || !teamId) {
+      return res.status(400).json({
+        success: false,
+        message: "Credentials Required",
+      });
+    }
+
     const team = await Team.findById(teamId);
 
     if (!team) {
@@ -91,7 +102,7 @@ export const removeMemberFromTeam = async (req: Request, res: Response) => {
       });
     }
 
-    if (!team.members.includes(userId)) {
+    if (!team.members.includes(Object(userId))) {
       return res.status(400).json({
         success: false,
         message: "User is not in team",
@@ -131,14 +142,16 @@ export const removeMemberFromTeam = async (req: Request, res: Response) => {
 
 export const sendNotification = async (req: Request, res: Response) => {
   try {
-    const { title, message } = req.body;
+    const { success, error, data } = sendNotificationSchema.safeParse(req.body);
 
-    if (!title || !message) {
-      return res.status(400).json({
+    if (!success) {
+      return res.status(404).json({
         success: false,
-        message: "All fields are required",
+        message: "Some Important Inputs are missing",
       });
     }
+
+    const { message, title } = data;
 
     const notification = await Notification.create({ title, message });
 
@@ -176,20 +189,24 @@ export const sendNotification = async (req: Request, res: Response) => {
 
 export const uploadOrUpdateBrochure = async (req: Request, res: Response) => {
   try {
-    const { link } = req.body;
+    const { success, error, data } = uploadOrUpdateBrochureSchema.safeParse(
+      req.body,
+    );
 
-    if (!link) {
-      return res.status(400).json({
+    if (!success) {
+      return res.status(404).json({
         success: false,
-        message: "Link is required",
+        message: "Some Important Inputs are missing",
       });
     }
+
+    const { link } = data;
 
     let brochure = await Brochure.findOne();
 
     if (brochure) {
       brochure.pdfUrl = link;
-      brochure.uploadedAt = Date.now();
+      brochure.uploadedAt = new Date();
       await brochure.save();
       return res.status(200).json({
         success: true,

@@ -2,14 +2,22 @@ import User from "../models/User";
 import Team from "../models/Team";
 import type { Request, Response } from "express";
 import sendMail from "../utils/sendMail";
+import { submitLinkSchema } from "../schemas/submission.schema";
 
 export const getTeamDetails = async (req: Request, res: Response) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user!.id;
 
     const user = await User.findById(userId);
 
-    const teamId = user.team;
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User Doesn't Exists",
+      });
+    }
+
+    const teamId = user.team._id;
 
     const team = await Team.findById(teamId)
       .populate("members", "name email")
@@ -36,20 +44,30 @@ export const getTeamDetails = async (req: Request, res: Response) => {
 
 export const submitLink = async (req: Request, res: Response) => {
   try {
-    const { driveLink, youtubeLink } = req.body;
-    if (!driveLink && !youtubeLink) {
-      return res.status(400).json({
+    const { success, error, data } = submitLinkSchema.safeParse(req.body);
+
+    if (!success) {
+      return res.status(404).json({
         success: false,
-        message:
-          "Please provide at least a Google Drive link or a YouTube link.",
+        message: "At least One Link is required",
       });
     }
 
-    const userId = req.user.id;
-    const user = await User.findById(userId);
-    const teamId = user.team;
+    const { youtubeLink, driveLink } = data;
 
-    const team = await Team.findById(teamId);
+    const userId = req.user!.id;
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "User doesn't exists",
+      });
+    }
+
+    const teamId = user.team._id;
+
+    const team = await Team.findById(teamId).populate("members").exec();
 
     if (!team) {
       return res.status(404).json({
@@ -67,8 +85,10 @@ export const submitLink = async (req: Request, res: Response) => {
     await team.save();
 
     // 📩 Email all team members
+
     for (const member of team.members) {
       await sendMail(
+        //@ts-ignore
         member.email,
         "Project Submission Successful",
         `

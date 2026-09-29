@@ -1,5 +1,33 @@
 import mongoose from "mongoose";
 
+const requiredDataSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+    },
+    email: {
+      type: String,
+      required: true,
+    },
+    collegeName: {
+      type: String,
+      required: true,
+    },
+    password: {
+      type: String,
+      required: true,
+    },
+    teamCode: {
+      type: String,
+    },
+    teamName: {
+      type: String,
+    },
+  },
+  { _id: false },
+);
+
 const otpSchema = new mongoose.Schema(
   {
     email: {
@@ -11,7 +39,7 @@ const otpSchema = new mongoose.Schema(
       required: true,
     },
     data: {
-      type: Object,
+      type: requiredDataSchema,
       required: true,
     },
     expiresAt: {

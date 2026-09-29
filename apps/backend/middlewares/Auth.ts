@@ -13,14 +13,30 @@ export const auth = async (req: Request, res: Response, next: NextFunction) => {
         message: "Token is missing",
       });
     }
+
     try {
       const jwtSecret = process.env.JWT_SECRET;
+
       if (!jwtSecret) {
         throw new Error("Missin Jwt secret");
       }
-      const decode = jwt.verify(token, jwtSecret);
-      console.log(decode);
-      req.user = decode;
+      const decoded = jwt.verify(token, jwtSecret);
+
+      if (
+        typeof decoded === "string" ||
+        typeof decoded.id !== "string" ||
+        !["leader", "member", "admin"].includes(decoded.role as string)
+      ) {
+        return res.status(401).json({
+          success: false,
+          message: "Invalid token payload",
+        });
+      }
+
+      req.user = {
+        id: decoded.id,
+        role: decoded.role,
+      };
     } catch (error) {
       return res.status(401).json({
         success: false,
@@ -42,6 +58,12 @@ export const isParticipant = async (
   next: NextFunction,
 ) => {
   try {
+    if (!req.user) {
+      return res.status(400).json({
+        success: false,
+        message: "User not logged in",
+      });
+    }
     const role = req.user.role;
     if (role !== "leader" && role !== "member") {
       return res.status(401).json({
@@ -64,6 +86,12 @@ export const isAdmin = async (
   next: NextFunction,
 ) => {
   try {
+    if (!req.user) {
+      return res.status(400).json({
+        success: false,
+        message: "User not logged in",
+      });
+    }
     const role = req.user.role;
     if (role !== "admin") {
       return res.status(401).json({
