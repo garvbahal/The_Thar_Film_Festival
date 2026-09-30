@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import OTPInput from "../../components/auth/OTPInput";
-import Button from "../../components/ui/Button";
-import { useVerifyOtp } from "../../hooks/auth.hooks";
+import OTPInput from "../../../components/auth/OTPInput";
+import Button from "../../../components/ui/Button";
+import { useVerifyOtp } from "../../../hooks/auth.hooks";
 import toast from "react-hot-toast";
 import axios from "axios";
 

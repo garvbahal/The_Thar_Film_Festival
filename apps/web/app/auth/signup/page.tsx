@@ -5,12 +5,12 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { User, Mail, Lock, GraduationCap } from "lucide-react";
 import { useForm } from "react-hook-form";
-import AuthLayout from "../../components/auth/AuthLayout";
-import TeamSelection from "../../components/auth/TeamSelection";
-import Button from "../../components/ui/Button";
-import Input from "../../components/ui/Input";
-import { useRequestOtp } from "../../hooks/auth.hooks";
-import { requestOtpFormValues } from "../../types/auth.types";
+import AuthLayout from "../../../components/auth/AuthLayout";
+import TeamSelection from "../../../components/auth/TeamSelection";
+import Button from "../../../components/ui/Button";
+import Input from "../../../components/ui/Input";
+import { useRequestOtp } from "../../../hooks/auth.hooks";
+import { requestOtpFormValues } from "../../../types/auth.types";
 import toast from "react-hot-toast";
 import axios from "axios";
 

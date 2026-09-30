@@ -1,11 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, Users, FileVideo, Bell } from "lucide-react";
 import DashboardLayout from "../../../components/dashboard/DashboardLayout";
 import { FullPageLoader } from "../../../components/ui/LoadingSpinner";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "../../../hooks/auth.hooks";
 
 export default function AdminLayout({
   children,
@@ -13,16 +13,25 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const { user, isLoading } = useAuth();
+  const { data, isPending } = useAuth();
   const router = useRouter();
 
-  React.useEffect(() => {
-    if (!isLoading && (!user || user.role !== "admin")) {
-      router.push("/login");
+  useEffect(() => {
+    if (isPending) {
+      return;
     }
-  }, [user, isLoading, router]);
 
-  if (isLoading || !user || user.role !== "admin") {
+    if (!data?.user) {
+      router.replace("/login");
+      return;
+    }
+
+    if (!["admin"].includes(data.user.role)) {
+      router.replace("/dashboard/participant");
+    }
+  }, [isPending, router]);
+
+  if (isPending) {
     return <FullPageLoader />;
   }
 

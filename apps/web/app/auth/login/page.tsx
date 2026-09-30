@@ -5,10 +5,10 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { Mail, Lock } from "lucide-react";
-import AuthLayout from "../../components/auth/AuthLayout";
-import Button from "../../components/ui/Button";
-import Input from "../../components/ui/Input";
-import { useLogin } from "../../hooks/auth.hooks";
+import AuthLayout from "../../../components/auth/AuthLayout";
+import Button from "../../../components/ui/Button";
+import Input from "../../../components/ui/Input";
+import { useLogin } from "../../../hooks/auth.hooks";
 import toast from "react-hot-toast";
 import axios from "axios";
 

@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Users, Upload, Bell, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
-import { useAuth } from "@/context/AuthContext";
 import { getMyTeam, getNotifications } from "@/lib/services";
 import { Team, Notification } from "@/lib/types";
 import { formatDateTime } from "@/lib/utils";
@@ -14,7 +13,6 @@ import LoadingSpinner from "../../../components/ui/LoadingSpinner";
 import ErrorState from "../../../components/ui/ErrorState";
 
 export default function ParticipantDashboard() {
-  const { user } = useAuth();
   const [team, setTeam] = useState<Team | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);

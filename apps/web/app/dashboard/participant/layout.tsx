@@ -1,20 +1,20 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, Users, Upload, Bell } from "lucide-react";
 import DashboardLayout from "../../../components/dashboard/DashboardLayout";
-import { useAuth } from "@/context/AuthContext";
-import { FullPageLoader } from "../../../components/ui/LoadingSpinner";
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
+import { useAuth } from "../../../hooks/auth.hooks";
 
 export default function ParticipantLayout({
   children,
 }: {
   children: ReactNode;
 }) {
+  const router = useRouter();
   const pathname = usePathname();
-  const { isLoading, user } = useAuth();
-
+  const { isPending, data } = useAuth();
+  const isAuthenticated = !!data?.user;
   const sidebarItems = [
     {
       label: "Overview",
@@ -42,9 +42,19 @@ export default function ParticipantLayout({
     },
   ];
 
-  if (isLoading || !user) {
-    return <FullPageLoader />;
-  }
+  useEffect(() => {
+    if (isPending) {
+      return;
+    }
+    if (!data?.user) {
+      router.replace("/login");
+      return;
+    }
+
+    if (!["leader", "member"].includes(data.user.role)) {
+      router.replace("/dashboard/admin");
+    }
+  }, [isAuthenticated, isPending, router]);
 
   return (
     <DashboardLayout sidebarItems={sidebarItems} role="participant">
