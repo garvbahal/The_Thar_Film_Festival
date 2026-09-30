@@ -10,6 +10,7 @@ export const useAuth = () => {
   return useQuery({
     queryKey: ["auth"],
     queryFn: getMyAuth,
+    retry: false,
   });
 };
 

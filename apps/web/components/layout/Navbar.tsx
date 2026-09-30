@@ -67,13 +67,13 @@ export default function Navbar() {
 
             <div className="flex items-center gap-6 pl-8 border-l border-border">
               <Link
-                href="/login"
+                href="/auth/login"
                 className="text-text-muted hover:text-text-main font-mono text-[11px] uppercase tracking-[0.2em] transition-colors"
               >
                 {isAuthenticated ? "Logout" : "Login"}
               </Link>
               <Link
-                href="/signup"
+                href="/auth/signup"
                 className="text-accent hover:text-accent-secondary font-mono text-[11px] uppercase tracking-[0.2em] transition-colors"
               >
                 {isAuthenticated ? "Dashboard" : "Signup"}
