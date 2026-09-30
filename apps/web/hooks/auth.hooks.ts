@@ -2,6 +2,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   getMyAuth,
   loginAuth,
+  logoutService,
   requestOtpSevice,
   verifyOtpService,
 } from "../services/auth.services";
@@ -29,5 +30,11 @@ export const useRequestOtp = () => {
 export const useVerifyOtp = () => {
   return useMutation({
     mutationFn: verifyOtpService,
+  });
+};
+
+export const useLogout = () => {
+  return useMutation({
+    mutationFn: logoutService,
   });
 };

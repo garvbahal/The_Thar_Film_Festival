@@ -7,6 +7,7 @@ import HomeRoutes from "./routes/home.route";
 import ParticipantRoutes from "./routes/participant.routes";
 import { dbConnect } from "./config/database";
 const app = express();
+console.log(`${process.env.FRONTEND_URL}`);
 
 app.use(express.json());
 

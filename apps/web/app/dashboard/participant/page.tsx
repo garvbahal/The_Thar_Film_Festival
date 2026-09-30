@@ -1,50 +1,51 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Users, Upload, Bell, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
-import { getMyTeam, getNotifications } from "@/lib/services";
-import { Team, Notification } from "@/lib/types";
-import { formatDateTime } from "@/lib/utils";
 import StatCard from "../../../components/dashboard/StatCard";
 import SectionHeading from "../../../components/ui/SectionHeading";
 import LoadingSpinner from "../../../components/ui/LoadingSpinner";
 import ErrorState from "../../../components/ui/ErrorState";
+import {
+  useGetAllNotifications,
+  useGetMyTeamDetails,
+} from "../../../hooks/participant.hooks";
+import axios from "axios";
 
 export default function ParticipantDashboard() {
-  const [team, setTeam] = useState<Team | null>(null);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: notificationData,
+    isPending: isNotificationsPending,
+    isError: isNotificationError,
+    error: notificationError,
+  } = useGetAllNotifications();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const [teamRes, notifRes] = await Promise.all([
-          getMyTeam(),
-          getNotifications(),
-        ]);
+  const {
+    data: teamData,
+    isPending: isTeamDataPending,
+    isError: isTeamDataError,
+    error: teamDataError,
+  } = useGetMyTeamDetails();
 
-        if (teamRes.success) setTeam(teamRes.team);
-        if (notifRes.success) setNotifications(notifRes.notifications);
-      } catch (err: any) {
-        setError(err.message || "Failed to load dashboard data");
-      } finally {
-        setLoading(false);
-      }
-    };
+  if (isNotificationsPending || isTeamDataPending) {
+    return <LoadingSpinner fullPage />;
+  }
 
-    fetchData();
-  }, []);
-
-  if (loading) return <LoadingSpinner fullPage />;
-  if (error)
+  if (isNotificationError)
     return (
       <ErrorState
         title="Something went wrong"
-        description={error}
+        description={`${axios.isAxiosError(notificationError) ? `${notificationError.response?.data.message}` : `Something went wrong`} `}
+        onRetry={() => window.location.reload()}
+      />
+    );
+
+  if (isTeamDataError)
+    return (
+      <ErrorState
+        title="Something went wrong"
+        description={`${axios.isAxiosError(teamDataError) ? `${teamDataError.response?.data.message}` : `Something went wrong`} `}
         onRetry={() => window.location.reload()}
       />
     );
@@ -82,19 +83,24 @@ export default function ParticipantDashboard() {
       >
         <StatCard
           label="Team"
-          value={team?.teamName || "No team"}
+          value={teamData.team?.teamName || "No team"}
           icon={<Users className="w-5 h-5" />}
         />
         <StatCard
           label="Members"
-          value={team?.members.length || 0}
+          value={teamData.team.members.length || 0}
           icon={<Users className="w-5 h-5" />}
         />
         <StatCard
           label="Submission"
-          value={team?.submission ? "Submitted" : "Pending"}
+          value={
+            !!teamData.team?.submission?.driveLink ||
+            !!teamData.team?.submission?.youtubeLink
+              ? "Submitted"
+              : "Pending"
+          }
           icon={<Upload className="w-5 h-5" />}
-          accent={!team?.submission}
+          accent={!teamData.team?.submission}
         />
       </motion.div>
 
@@ -103,9 +109,9 @@ export default function ParticipantDashboard() {
           <SectionHeading title="Recent Notifications" />
 
           <div className="space-y-4">
-            {notifications.slice(0, 3).map((notif) => (
+            {notificationData.notifications.slice(0, 3).map((notif, indx) => (
               <div
-                key={notif._id}
+                key={indx}
                 className="bg-bg-card border border-border rounded-xl p-5 flex gap-4"
               >
                 <div className="mt-1">
@@ -117,18 +123,22 @@ export default function ParticipantDashboard() {
                     {notif.message}
                   </p>
                   <p className="text-xs text-text-muted/60 mt-3">
-                    {formatDateTime(notif.sendAt)}
+                    {notif.sendAt.toLocaleDateString("en-US", {
+                      year: "numeric",
+                      day: "numeric",
+                      month: "short",
+                    })}
                   </p>
                 </div>
               </div>
             ))}
-            {notifications.length === 0 && (
+            {notificationData.notifications.length === 0 && (
               <div className="text-center py-8 text-text-muted bg-bg-card border border-border rounded-xl">
                 No recent notifications
               </div>
             )}
 
-            {notifications.length > 0 && (
+            {notificationData.notifications.length > 0 && (
               <Link
                 href="/dashboard/participant/notifications"
                 className="inline-flex items-center text-accent hover:text-accent-secondary text-sm font-medium gap-1"

@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { LogOut } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
-import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import { useLogout } from "../../hooks/auth.hooks";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
+import axios from "axios";
 
 interface SidebarItem {
   label: string;
@@ -22,7 +24,24 @@ export default function DashboardSidebar({
   items,
   role,
 }: DashboardSidebarProps) {
-  const { logout } = useAuth();
+  const { mutate, isPending } = useLogout();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    mutate(undefined, {
+      onSuccess: (data) => {
+        toast.success(data.message);
+        router.replace("/");
+      },
+      onError: (error) => {
+        if (axios.isAxiosError(error)) {
+          toast.error(error.response?.data.message || "Something went wrong");
+        } else {
+          toast.error("Something went wrong");
+        }
+      },
+    });
+  };
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 bg-bg-secondary border-r border-border hidden lg:flex flex-col">
@@ -46,12 +65,14 @@ export default function DashboardSidebar({
             <Link
               key={item.href}
               href={item.href}
-              className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors relative",
-                item.active
-                  ? "bg-accent/10 text-accent border-l-2 border-accent"
-                  : "text-text-main hover:bg-bg-elevated hover:text-white",
-              )}
+              className={`
+                flex items-center gap-3 px-4 py-3 rounded-lg transition-colors relative",
+                ${
+                  item.active
+                    ? "bg-accent/10 text-accent border-l-2 border-accent"
+                    : "text-text-main hover:bg-bg-elevated hover:text-white"
+                }
+              `}
             >
               <Icon className="w-5 h-5" />
               <span className="font-medium">{item.label}</span>
@@ -69,11 +90,13 @@ export default function DashboardSidebar({
 
       <div className="p-4 border-t border-border">
         <button
-          onClick={() => logout()}
-          className="flex w-full items-center gap-3 px-4 py-3 rounded-lg text-error hover:bg-error/10 transition-colors"
+          onClick={() => handleLogout()}
+          className={`flex w-full items-center gap-3 px-4 py-3 rounded-lg text-error hover:bg-error/10 transition-colors ${isPending && `opacity-50 cursor-not-allowed`}`}
         >
           <LogOut className="w-5 h-5" />
-          <span className="font-medium">Logout</span>
+          <span className="font-medium">
+            {isPending ? "Loging Out.." : "Logout"}
+          </span>
         </button>
       </div>
     </aside>

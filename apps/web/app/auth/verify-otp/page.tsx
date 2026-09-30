@@ -33,6 +33,7 @@ export default function VerifyOtpPage() {
       {
         onSuccess: (data) => {
           toast.success(data.message);
+          router.replace("/");
         },
         onError: (error) => {
           if (axios.isAxiosError(error)) {

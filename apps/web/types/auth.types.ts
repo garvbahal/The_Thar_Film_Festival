@@ -30,3 +30,8 @@ export type verifyOtpResponse = {
   success: boolean;
   message: string;
 };
+
+export type logoutResponse = {
+  success: boolean;
+  message: string;
+};

@@ -1,7 +1,6 @@
 "use client";
 
 import { ReactNode } from "react";
-import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 
 interface StatCardProps {
@@ -20,12 +19,14 @@ export default function StatCard({
   return (
     <motion.div
       whileHover={{ y: -4 }}
-      className={cn(
+      className={`
         "bg-bg-card border rounded-xl p-5 relative overflow-hidden transition-all duration-200",
-        accent
-          ? "border-accent/20"
-          : "border-border hover:border-text-muted/30",
-      )}
+        ${
+          accent
+            ? "border-accent/20"
+            : "border-border hover:border-text-muted/30"
+        }
+      `}
     >
       <div className="flex justify-between items-start mb-4">
         <h3 className="text-sm text-text-muted font-medium">{label}</h3>
@@ -33,10 +34,10 @@ export default function StatCard({
       </div>
 
       <div
-        className={cn(
+        className={`
           "text-2xl font-semibold",
-          accent ? "text-accent" : "text-text-main",
-        )}
+          ${accent ? "text-accent" : "text-text-main"}
+        `}
       >
         {value}
       </div>

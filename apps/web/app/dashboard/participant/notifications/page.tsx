@@ -1,44 +1,29 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Bell } from "lucide-react";
 import { motion } from "framer-motion";
-import { getNotifications } from "@/lib/services";
-import { Notification } from "@/lib/types";
-import { formatDateTime } from "@/lib/utils";
 import SectionHeading from "../../../../components/ui/SectionHeading";
 import LoadingSpinner from "../../../../components/ui/LoadingSpinner";
 import ErrorState from "../../../../components/ui/ErrorState";
 import EmptyState from "../../../../components/ui/EmptyState";
+import { useGetAllNotifications } from "../../../../hooks/participant.hooks";
+import axios from "axios";
 
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: notifications,
+    isPending,
+    isError,
+    error: notificationError,
+  } = useGetAllNotifications();
 
-  useEffect(() => {
-    const fetchNotifs = async () => {
-      try {
-        setLoading(true);
-        const res = await getNotifications();
-        if (res.success) {
-          setNotifications(res.notifications);
-        }
-      } catch (err: any) {
-        setError(err.message || "Failed to load notifications");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchNotifs();
-  }, []);
+  if (isPending) return <LoadingSpinner fullPage />;
 
-  if (loading) return <LoadingSpinner fullPage />;
-  if (error)
+  if (isError)
     return (
       <ErrorState
         title="Failed to load"
-        description={error}
+        description={`${axios.isAxiosError(notificationError) ? `${notificationError.response?.data.message}` : `Something went wrong`} `}
         onRetry={() => window.location.reload()}
       />
     );
@@ -63,7 +48,7 @@ export default function NotificationsPage() {
         description="Important updates and announcements from the festival organizers."
       />
 
-      {notifications.length === 0 ? (
+      {notifications.notifications.length === 0 ? (
         <EmptyState
           icon={<Bell />}
           title="No notifications yet"
@@ -76,9 +61,9 @@ export default function NotificationsPage() {
           animate="show"
           className="space-y-4"
         >
-          {notifications.map((notif) => (
+          {notifications.notifications.map((notif, indx) => (
             <motion.div
-              key={notif._id}
+              key={indx}
               variants={item}
               className="bg-bg-card border border-border rounded-xl p-5 md:p-6 flex gap-4 hover:border-text-muted/30 transition-colors"
             >
@@ -89,7 +74,11 @@ export default function NotificationsPage() {
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-2">
                   <h3 className="font-semibold text-lg">{notif.title}</h3>
                   <span className="text-xs text-text-muted/60 whitespace-nowrap bg-bg-elevated px-2 py-1 rounded-md">
-                    {formatDateTime(notif.sendAt)}
+                    {notif.sendAt.toLocaleDateString("en-US", {
+                      day: "numeric",
+                      year: "numeric",
+                      month: "short",
+                    })}
                   </span>
                 </div>
                 <p className="text-text-muted leading-relaxed whitespace-pre-line">

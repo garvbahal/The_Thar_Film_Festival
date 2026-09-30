@@ -13,7 +13,7 @@ export type getTeamDetailsResponse = {
     members: {
       name: string;
       email: string;
-    };
+    }[];
   };
 };
 

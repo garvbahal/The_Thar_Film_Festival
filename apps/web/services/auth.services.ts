@@ -2,6 +2,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import {
   loginResponseType,
+  logoutResponse,
   myCredentialsType,
   requestOtpFormValues,
   requestOtpResponseType,
@@ -74,5 +75,15 @@ export const verifyOtpService = async ({
     { email, otp },
     { withCredentials: true },
   );
+  return data;
+};
+
+export const logoutService = async (): Promise<logoutResponse> => {
+  const { data } = await axios.post(
+    `${process.env.NEXT_PUBLIC_BACKEND_URL}/logout`,
+    {},
+    { withCredentials: true },
+  );
+
   return data;
 };

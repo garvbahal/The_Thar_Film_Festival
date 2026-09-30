@@ -1,55 +1,43 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Copy, Check, Users } from "lucide-react";
 import { motion } from "framer-motion";
-import { useAuth } from "@/context/AuthContext";
-import { getMyTeam } from "@/lib/services";
-import { Team } from "@/lib/types";
 import SectionHeading from "../../../../components/ui/SectionHeading";
 import LoadingSpinner from "../../../../components/ui/LoadingSpinner";
 import ErrorState from "../../../../components/ui/ErrorState";
 import EmptyState from "../../../../components/ui/EmptyState";
+import { useGetMyTeamDetails } from "../../../../hooks/participant.hooks";
+import axios from "axios";
 
 export default function TeamPage() {
-  const { user } = useAuth();
-  const [team, setTeam] = useState<Team | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    const fetchTeam = async () => {
-      try {
-        setLoading(true);
-        const res = await getMyTeam();
-        if (res.success) setTeam(res.team);
-      } catch (err: any) {
-        setError(err.message || "Failed to load team data");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchTeam();
-  }, []);
+  const {
+    data: teamData,
+    isPending: isTeamDataPending,
+    isError: isTeamDataError,
+    error: teamDataError,
+  } = useGetMyTeamDetails();
 
   const copyCode = () => {
-    if (team?.uniqueCode) {
-      navigator.clipboard.writeText(team.uniqueCode);
+    if (teamData?.team?.uniqueCode) {
+      navigator.clipboard.writeText(teamData.team.uniqueCode);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
   };
 
-  if (loading) return <LoadingSpinner fullPage />;
-  if (error)
+  if (isTeamDataPending) return <LoadingSpinner fullPage />;
+
+  if (isTeamDataError)
     return (
       <ErrorState
         title="Failed to load team"
-        description={error}
+        description={`${axios.isAxiosError(teamDataError) ? teamDataError.response?.data.message || "Something went wrong" : "Something went wrong"}`}
         onRetry={() => window.location.reload()}
       />
     );
+
   if (!team)
     return (
       <EmptyState
@@ -67,8 +55,10 @@ export default function TeamPage() {
     >
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-border">
         <div>
-          <h1 className="font-heading text-4xl mb-2">{team.teamName}</h1>
-          <p className="text-text-muted">{team.collegeName}</p>
+          <h1 className="font-heading text-4xl mb-2">
+            {teamData.team.teamName}
+          </h1>
+          <p className="text-text-muted">{teamData.team.collegeName}</p>
         </div>
 
         <div className="bg-bg-elevated border border-border p-3 rounded-lg flex items-center gap-4">
@@ -77,7 +67,7 @@ export default function TeamPage() {
               Team Code
             </div>
             <div className="font-mono text-lg font-semibold">
-              {team.uniqueCode}
+              {teamData.team.uniqueCode}
             </div>
           </div>
           <button
@@ -97,11 +87,11 @@ export default function TeamPage() {
       <div className="space-y-6">
         <SectionHeading
           title="Team Members"
-          description={`${team.members.length} members in this team`}
+          description={`${teamData.team.members.length} members in this team`}
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {team.members.map((member) => {
+          {teamData.team.members.map((member) => {
             const isMe = user?.id === member._id;
 
             return (

@@ -3,9 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Menu, X, LogOut } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
-import { cn } from "@/lib/utils";
+// import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLogout } from "../../hooks/auth.hooks";
+import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
+import axios from "axios";
 
 interface SidebarItem {
   label: string;
@@ -20,8 +23,25 @@ interface DashboardHeaderProps {
 }
 
 export default function DashboardHeader({ items, role }: DashboardHeaderProps) {
-  const { logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+  const { mutate, isPending } = useLogout();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    mutate(undefined, {
+      onSuccess: (data) => {
+        toast.success(data.message);
+        router.replace("/");
+      },
+      onError: (error) => {
+        if (axios.isAxiosError(error)) {
+          toast.error(error.response?.data.message || "Something went wrong");
+        } else {
+          toast.error("Something went wrong");
+        }
+      },
+    });
+  };
 
   return (
     <header className="lg:hidden relative">
@@ -70,12 +90,14 @@ export default function DashboardHeader({ items, role }: DashboardHeaderProps) {
                       key={item.href}
                       href={item.href}
                       onClick={() => setIsOpen(false)}
-                      className={cn(
-                        "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
-                        item.active
-                          ? "bg-accent/10 text-accent border-l-2 border-accent"
-                          : "text-text-main hover:bg-bg-elevated hover:text-white",
-                      )}
+                      className={`
+                        flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
+                        ${
+                          item.active
+                            ? "bg-accent/10 text-accent border-l-2 border-accent"
+                            : "text-text-main hover:bg-bg-elevated hover:text-white"
+                        }
+                      `}
                     >
                       <Icon className="w-5 h-5" />
                       <span className="font-medium">{item.label}</span>
@@ -88,12 +110,14 @@ export default function DashboardHeader({ items, role }: DashboardHeaderProps) {
                 <button
                   onClick={() => {
                     setIsOpen(false);
-                    logout();
+                    handleLogout();
                   }}
-                  className="flex w-full items-center gap-3 px-4 py-3 rounded-lg text-error hover:bg-error/10 transition-colors"
+                  className={`flex w-full items-center gap-3 px-4 py-3 rounded-lg text-error hover:bg-error/10 transition-colors ${isPending ? `opacity-50 cursor-not-allowed` : ``}`}
                 >
                   <LogOut className="w-5 h-5" />
-                  <span className="font-medium">Logout</span>
+                  <span className="font-medium">
+                    {isPending ? "Loging Out.." : "Logout"}
+                  </span>
                 </button>
               </div>
             </motion.div>

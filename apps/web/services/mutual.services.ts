@@ -7,5 +7,6 @@ export const getAllNotificationsService =
       `${process.env.NEXT_PUBLIC_BACKEND_URL}/getnotifications`,
       { withCredentials: true },
     );
+
     return data;
   };

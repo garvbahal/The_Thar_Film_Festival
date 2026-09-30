@@ -1,9 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-// import * as z from "zod";
 import {
   Video,
   HardDrive,
@@ -12,111 +10,69 @@ import {
   Check,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { getMyTeam, submitLinks } from "@/lib/services";
-import { Team, Submission } from "@/lib/types";
 import Input from "../../../../components/ui/Input";
 import Button from "../../../../components/ui/Button";
 import LoadingSpinner from "../../../../components/ui/LoadingSpinner";
 import ErrorState from "../../../../components/ui/ErrorState";
+import {
+  useGetMyTeamDetails,
+  useSubmitSubmission,
+} from "../../../../hooks/participant.hooks";
+import toast from "react-hot-toast";
+import axios from "axios";
 
-const schema = z
-  .object({
-    youtubeLink: z
-      .string()
-      .url("Must be a valid URL starting with https://")
-      .optional()
-      .or(z.literal("")),
-    driveLink: z
-      .string()
-      .url("Must be a valid URL starting with https://")
-      .optional()
-      .or(z.literal("")),
-  })
-  .refine((data) => data.youtubeLink || data.driveLink, {
-    message: "At least one link must be provided",
-    path: ["youtubeLink"],
-  });
-
-type FormValues = z.infer<typeof schema>;
+type FormValues = {
+  youtubeLink?: string;
+  driveLink?: string;
+};
 
 export default function SubmissionPage() {
-  const [team, setTeam] = useState<Team | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-
   const {
     register,
     handleSubmit,
     formState: { errors },
-    reset,
-  } = useForm<FormValues>({
-    resolver: zodResolver(schema),
-  });
+  } = useForm<FormValues>({});
 
-  useEffect(() => {
-    const fetchTeam = async () => {
-      try {
-        setLoading(true);
-        const res = await getMyTeam();
-        if (res.success) {
-          setTeam(res.team);
-          if (res.team.submission) {
-            reset({
-              youtubeLink: res.team.submission.youtubeLink || "",
-              driveLink: res.team.submission.driveLink || "",
-            });
-          }
+  const { mutate, isPending } = useSubmitSubmission();
+
+  const onSubmit = (submitFormData: FormValues) => {
+    mutate(submitFormData, {
+      onSuccess: (data) => {
+        toast.success(data.message);
+      },
+      onError: (error) => {
+        if (axios.isAxiosError(error)) {
+          toast.error(error.response?.data.message || "Something went wrong");
+        } else {
+          toast.error("Something went wrong");
         }
-      } catch (err: any) {
-        setError(err.message || "Failed to load data");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchTeam();
-  }, [reset]);
-
-  const onSubmit = async (data: FormValues) => {
-    try {
-      setSubmitting(true);
-      setError(null);
-      setSuccess(null);
-
-      const payload: Partial<FormValues> = {};
-      if (data.youtubeLink) payload.youtubeLink = data.youtubeLink;
-      if (data.driveLink) payload.driveLink = data.driveLink;
-
-      const res = await submitLinks(payload);
-
-      if (res.success) {
-        setSuccess("Submission updated successfully!");
-        // Update local team state
-        setTeam((prev) =>
-          prev ? { ...prev, submission: res.submission } : null,
-        );
-      } else {
-        setError(res.message || "Failed to submit");
-      }
-    } catch (err: any) {
-      setError(err.message || "An error occurred");
-    } finally {
-      setSubmitting(false);
-    }
+      },
+    });
   };
 
-  if (loading) return <LoadingSpinner fullPage />;
-  if (error && !team)
+  const {
+    data: teamData,
+    isPending: isTeamDetailsPending,
+    isError: isTeamDetailsError,
+    error: teamDetailsError,
+  } = useGetMyTeamDetails();
+
+  if (isPending || isTeamDetailsPending) {
+    return <LoadingSpinner fullPage />;
+  }
+
+  if (isTeamDetailsError)
     return (
       <ErrorState
         title="Failed to load"
-        description={error}
+        description={`${axios.isAxiosError(teamDetailsError) ? teamDetailsError.response?.data.message || "Something went wrong" : "Something went wrong"}`}
         onRetry={() => window.location.reload()}
       />
     );
 
-  const isSubmitted = !!team?.submission;
+  const isSubmitted =
+    !!teamData.team?.submission?.youtubeLink ||
+    !!teamData.team?.submission?.driveLink;
 
   return (
     <motion.div
@@ -148,9 +104,9 @@ export default function SubmissionPage() {
           </div>
 
           <div className="flex flex-wrap gap-4 justify-center w-full mt-4">
-            {team.submission?.youtubeLink && (
+            {teamData.team.submission?.youtubeLink && (
               <a
-                href={team.submission.youtubeLink}
+                href={teamData.team.submission.youtubeLink}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 bg-bg-card hover:bg-bg-elevated border border-border px-4 py-2 rounded-lg transition-colors text-sm"
@@ -160,9 +116,9 @@ export default function SubmissionPage() {
                 <ExternalLink className="w-3 h-3 ml-1 opacity-50" />
               </a>
             )}
-            {team.submission?.driveLink && (
+            {teamData.team.submission?.driveLink && (
               <a
-                href={team.submission.driveLink}
+                href={teamData.team.submission.driveLink}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 bg-bg-card hover:bg-bg-elevated border border-border px-4 py-2 rounded-lg transition-colors text-sm"
@@ -178,20 +134,6 @@ export default function SubmissionPage() {
 
       <div className="bg-bg-card border border-border rounded-xl p-6 md:p-8">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {error && (
-            <div className="p-4 bg-error/10 border border-error/20 text-error rounded-lg flex items-start gap-3 text-sm">
-              <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-              <span>{error}</span>
-            </div>
-          )}
-
-          {success && (
-            <div className="p-4 bg-success/10 border border-success/20 text-success rounded-lg flex items-start gap-3 text-sm">
-              <Check className="w-5 h-5 shrink-0 mt-0.5" />
-              <span>{success}</span>
-            </div>
-          )}
-
           <div className="space-y-6">
             <Input
               label="YouTube URL"
@@ -225,7 +167,7 @@ export default function SubmissionPage() {
               type="submit"
               variant="primary"
               className="w-full"
-              isLoading={submitting}
+              isLoading={isPending}
             >
               {isSubmitted ? "Update Submission" : "Publish Submission"}
             </Button>

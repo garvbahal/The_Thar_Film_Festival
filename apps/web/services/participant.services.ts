@@ -1,5 +1,8 @@
 import axios from "axios";
-import { getTeamDetailsResponse } from "../types/participant.types";
+import {
+  getTeamDetailsResponse,
+  submitLinkResponse,
+} from "../types/participant.types";
 
 export const getTeamDetailsService =
   async (): Promise<getTeamDetailsResponse> => {
@@ -7,6 +10,7 @@ export const getTeamDetailsService =
       `${process.env.NEXT_PUBLIC_BACKEND_URL}/team`,
       { withCredentials: true },
     );
+
     return data;
   };
 
@@ -16,11 +20,12 @@ export const submitLinkService = async ({
 }: {
   youtubeLink?: string;
   driveLink?: string;
-}) => {
+}): Promise<submitLinkResponse> => {
   const { data } = await axios.post(
     `${process.env.NEXT_PUBLIC_BACKEND_URL}/submit`,
     { youtubeLink, driveLink },
     { withCredentials: true },
   );
+
   return data;
 };
