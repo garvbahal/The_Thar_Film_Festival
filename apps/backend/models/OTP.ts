@@ -24,6 +24,11 @@ const requiredDataSchema = new mongoose.Schema(
     teamName: {
       type: String,
     },
+    teamOption: {
+      type: String,
+      enum: ["create", "join"],
+      required: true,
+    },
   },
   { _id: false },
 );

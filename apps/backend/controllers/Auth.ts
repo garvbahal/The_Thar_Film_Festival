@@ -30,7 +30,15 @@ export const requestOTP = async (req: Request, res: Response) => {
       });
     }
 
-    const { name, email, collegeName, password, teamCode, teamName } = data;
+    const {
+      name,
+      email,
+      collegeName,
+      password,
+      teamCode,
+      teamName,
+      teamOption,
+    } = data;
 
     const existingUser = await User.findOne({ email });
 
@@ -57,6 +65,7 @@ export const requestOTP = async (req: Request, res: Response) => {
           collegeName,
           teamCode,
           teamName,
+          teamOption,
           name,
         },
         expiresAt: new Date(Date.now() + 5 * 60 * 1000),
@@ -127,14 +136,15 @@ export const signup = async (req: Request, res: Response) => {
       });
     }
 
-    const { password, collegeName, teamCode, teamName, name } = details.data;
+    const { password, collegeName, teamCode, teamName, name, teamOption } =
+      details.data;
 
     let userDetails;
     let teamDetails;
 
     // Member signup
 
-    if (teamCode) {
+    if (teamOption === "join") {
       teamDetails = await Team.findOne({ uniqueCode: teamCode });
 
       if (!teamDetails) {
@@ -173,7 +183,7 @@ export const signup = async (req: Request, res: Response) => {
                 <p><b>Team Code:</b> ${teamDetails.uniqueCode}</p>
                 `,
       );
-    } else {
+    } else if (teamOption === "create") {
       // Leader signup
       if (!teamName) {
         return res.status(400).json({
@@ -236,8 +246,6 @@ export const signup = async (req: Request, res: Response) => {
     return res.status(200).json({
       success: true,
       message: "signup successfull",
-      user: userDetails,
-      team: teamDetails,
     });
   } catch (error) {
     return res.status(500).json({
@@ -289,10 +297,9 @@ export const login = async (req: Request, res: Response) => {
         secure: true,
       };
 
-      res.cookie("token", jwtToken, options).status(200).json({
+      return res.cookie("token", jwtToken, options).status(200).json({
         success: true,
         message: "Logged in successfully!!",
-        jwtToken,
       });
     } else {
       return res.status(401).json({

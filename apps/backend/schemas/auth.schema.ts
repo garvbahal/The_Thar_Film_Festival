@@ -8,6 +8,7 @@ export const requestOtpSchema = z
     collegeName: z.string().min(1, "College Name is required"),
     teamName: z.string().min(1, "Team Name is required").optional(),
     teamCode: z.string().min(1, "Team Code is required").optional(),
+    teamOption: z.enum(["create", "join"]),
   })
   .refine((data) => data.teamName || data.teamCode, {
     message: "Either of teamName or teamCode is required",

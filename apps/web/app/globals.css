@@ -1,50 +1,144 @@
+@import "tailwindcss";
+
+/* ─── Design System Tokens ──────────────────────────────────────────────── */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg-primary: #090909;
+  --bg-secondary: #111111;
+  --bg-card: #171717;
+  --bg-elevated: #202020;
+  --accent-primary: #f5c542;
+  --accent-secondary: #e6ad27;
+  --text-main: #f5f5f0;
+  --text-muted: #a1a1aa;
+  --border-color: #292929;
+  --color-success: #36c98f;
+  --color-error: #f05d5e;
+  --background: var(--bg-primary);
+  --foreground: var(--text-main);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-bg-card: var(--bg-card);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-accent: var(--accent-primary);
+  --color-accent-secondary: var(--accent-secondary);
+  --color-text-main: var(--text-main);
+  --color-text-muted: var(--text-muted);
+  --color-border: var(--border-color);
+  --color-success: var(--color-success);
+  --color-error: var(--color-error);
+  --font-heading: var(--font-bebas-neue);
+  --font-body: var(--font-inter);
 }
 
-html,
-body {
-  max-width: 100vw;
-  overflow-x: hidden;
-}
-
-body {
-  color: var(--foreground);
-  background: var(--background);
-}
+/* ─── Base ──────────────────────────────────────────────────────────────── */
 
 * {
   box-sizing: border-box;
-  padding: 0;
-  margin: 0;
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
+html {
+  scroll-behavior: smooth;
 }
 
-.imgDark {
-  display: none;
+body {
+  background: var(--bg-primary);
+  color: var(--text-main);
+  font-family: var(--font-body), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
+/* ─── Film Grain Overlay ────────────────────────────────────────────────── */
+
+.film-grain {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+}
+
+/* ─── Scrollbar ─────────────────────────────────────────────────────────── */
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-elevated);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #333;
+}
+
+/* ─── Selection ─────────────────────────────────────────────────────────── */
+
+::selection {
+  background: rgba(245, 197, 66, 0.3);
+  color: var(--text-main);
+}
+
+/* ─── Reduced motion ───────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 
-  .imgLight {
+  .film-grain {
     display: none;
   }
-  .imgDark {
-    display: unset;
-  }
+}
+
+/* ─── Utility Classes ───────────────────────────────────────────────────── */
+
+.text-gradient-gold {
+  background: linear-gradient(
+    135deg,
+    var(--accent-primary),
+    var(--accent-secondary)
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.glow-yellow {
+  box-shadow:
+    0 0 20px rgba(245, 197, 66, 0.15),
+    0 0 40px rgba(245, 197, 66, 0.05);
+}
+
+.border-gradient {
+  border: 1px solid transparent;
+  background-clip: padding-box;
+  position: relative;
+}
+
+.bg-noise {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.4'/%3E%3C/svg%3E");
+  background-size: 256px 256px;
 }

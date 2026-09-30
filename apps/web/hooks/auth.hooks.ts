@@ -1,0 +1,32 @@
+import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  getMyAuth,
+  loginAuth,
+  requestOtpSevice,
+  verifyOtpService,
+} from "../services/auth.services";
+
+export const useAuth = () => {
+  return useQuery({
+    queryKey: ["auth"],
+    queryFn: getMyAuth,
+  });
+};
+
+export const useLogin = () => {
+  return useMutation({
+    mutationFn: loginAuth,
+  });
+};
+
+export const useRequestOtp = () => {
+  return useMutation({
+    mutationFn: requestOtpSevice,
+  });
+};
+
+export const useVerifyOtp = () => {
+  return useMutation({
+    mutationFn: verifyOtpService,
+  });
+};
