@@ -9,6 +9,7 @@ import ErrorState from "../../../../components/ui/ErrorState";
 import EmptyState from "../../../../components/ui/EmptyState";
 import { useGetMyTeamDetails } from "../../../../hooks/participant.hooks";
 import axios from "axios";
+import { useAuth } from "../../../../hooks/auth.hooks";
 
 export default function TeamPage() {
   const [copied, setCopied] = useState(false);
@@ -19,6 +20,13 @@ export default function TeamPage() {
     error: teamDataError,
   } = useGetMyTeamDetails();
 
+  const {
+    data: myData,
+    isPending: isMyDataPending,
+    isError: isMyDataError,
+    error: myDataError,
+  } = useAuth();
+
   const copyCode = () => {
     if (teamData?.team?.uniqueCode) {
       navigator.clipboard.writeText(teamData.team.uniqueCode);
@@ -27,7 +35,7 @@ export default function TeamPage() {
     }
   };
 
-  if (isTeamDataPending) return <LoadingSpinner fullPage />;
+  if (isTeamDataPending || isMyDataPending) return <LoadingSpinner fullPage />;
 
   if (isTeamDataError)
     return (
@@ -38,7 +46,16 @@ export default function TeamPage() {
       />
     );
 
-  if (!team)
+  if (isMyDataError)
+    return (
+      <ErrorState
+        title="Failed to load team"
+        description={`${axios.isAxiosError(myDataError) ? myDataError.response?.data.message || "Something went wrong" : "Something went wrong"}`}
+        onRetry={() => window.location.reload()}
+      />
+    );
+
+  if (!teamData?.team)
     return (
       <EmptyState
         icon={<Users />}
@@ -92,7 +109,7 @@ export default function TeamPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {teamData.team.members.map((member) => {
-            const isMe = user?.id === member._id;
+            const isMe = myData.user?.id === member._id;
 
             return (
               <div
