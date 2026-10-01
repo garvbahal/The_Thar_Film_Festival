@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Users, FileVideo, Bell, ArrowRight, ShieldCheck } from "lucide-react";
@@ -8,44 +8,43 @@ import StatCard from "../../../components/dashboard/StatCard";
 import SectionHeading from "../../../components/ui/SectionHeading";
 import LoadingSpinner from "../../../components/ui/LoadingSpinner";
 import ErrorState from "../../../components/ui/ErrorState";
+import { useGetAllNotifications } from "../../../hooks/participant.hooks";
+import axios from "axios";
 import {
-  getAllTeams,
-  getAllSubmissions,
-  getNotifications,
-} from "@/lib/services";
-import { formatDateTime } from "@/lib/utils";
-import { Team, Notification } from "@/lib/types";
+  useGetAllSubmissions,
+  useGetAllTeamDetails,
+} from "../../../hooks/admin.hooks";
 
 export default function AdminOverview() {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: allNotifications,
+    isPending: isAllNotificationsPending,
+    isError: isAllNotificationsError,
+    error: allNotificationsError,
+    refetch: retryAllNotifications,
+  } = useGetAllNotifications();
 
-  const [teams, setTeams] = useState<Team[]>([]);
-  const [submissions, setSubmissions] = useState<Team[]>([]);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const {
+    data: allTeamDetails,
+    isPending: isAllTeamDetailsPending,
+    isError: isAllTeamDetailsError,
+    error: allTeamDetailsError,
+    refetch: retryAllTeamDetails,
+  } = useGetAllTeamDetails();
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const [teamsData, submissionsData, notificationsData] = await Promise.all(
-        [getAllTeams(), getAllSubmissions(), getNotifications()],
-      );
-      setTeams((teamsData as any).teams || []);
-      setSubmissions((submissionsData as any).submissions || []);
-      setNotifications((notificationsData as any).notifications || []);
-    } catch (err: any) {
-      setError(err.message || "Failed to load dashboard data");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const {
+    data: allSubmissionsData,
+    isPending: isAllSubmissionsDataPending,
+    isError: isAllSubmissionsDataError,
+    error: allSubmissionsDataError,
+    refetch: retryAllSubmissions,
+  } = useGetAllSubmissions();
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  if (loading) {
+  if (
+    isAllNotificationsPending ||
+    isAllTeamDetailsPending ||
+    isAllSubmissionsDataPending
+  ) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
         <LoadingSpinner size="lg" />
@@ -53,11 +52,34 @@ export default function AdminOverview() {
     );
   }
 
-  if (error) {
-    return <ErrorState description={error} onRetry={fetchData} />;
+  if (isAllNotificationsError) {
+    return (
+      <ErrorState
+        description={`${axios.isAxiosError(allNotificationsError) ? allNotificationsError.response?.data.message || "Something went wrong" : "Something went wrong"}`}
+        onRetry={retryAllNotifications}
+      />
+    );
   }
 
-  const totalParticipants = teams.reduce(
+  if (isAllSubmissionsDataError) {
+    return (
+      <ErrorState
+        description={`${axios.isAxiosError(allSubmissionsDataError) ? allSubmissionsDataError.response?.data.message || "Something went wrong" : "Something went wrong"}`}
+        onRetry={retryAllSubmissions}
+      />
+    );
+  }
+
+  if (isAllNotificationsError) {
+    return (
+      <ErrorState
+        description={`${axios.isAxiosError(allTeamDetailsError) ? allTeamDetailsError.response?.data.message || "Something went wrong" : "Something went wrong"}`}
+        onRetry={retryAllTeamDetails}
+      />
+    );
+  }
+
+  const totalParticipants = allTeamDetails?.teams.reduce(
     (acc, team) => acc + (team.members ? team.members.length : 0),
     0,
   );
@@ -102,14 +124,14 @@ export default function AdminOverview() {
         <motion.div variants={itemVariants}>
           <StatCard
             label="Total Teams"
-            value={teams.length}
+            value={allTeamDetails?.teams?.length || 0}
             icon={<ShieldCheck size={24} />}
           />
         </motion.div>
         <motion.div variants={itemVariants}>
           <StatCard
             label="Participants"
-            value={totalParticipants}
+            value={totalParticipants || 0}
             icon={<Users size={24} />}
             accent
           />
@@ -117,14 +139,14 @@ export default function AdminOverview() {
         <motion.div variants={itemVariants}>
           <StatCard
             label="Submissions"
-            value={submissions.length}
+            value={allSubmissionsData.submissions.length}
             icon={<FileVideo size={24} />}
           />
         </motion.div>
         <motion.div variants={itemVariants}>
           <StatCard
             label="Notifications"
-            value={notifications.length}
+            value={allNotifications.notifications.length}
             icon={<Bell size={24} />}
           />
         </motion.div>
@@ -138,7 +160,7 @@ export default function AdminOverview() {
           />
 
           <div className="space-y-4">
-            {notifications.slice(0, 3).map((notif, i) => (
+            {allNotifications.notifications.slice(0, 3).map((notif, i) => (
               <motion.div
                 key={notif._id || i}
                 initial={{ opacity: 0, x: -20 }}
@@ -151,14 +173,18 @@ export default function AdminOverview() {
                     {notif.title}
                   </h3>
                   <span className="text-xs text-text-muted">
-                    {formatDateTime(notif.sendAt || "")}
+                    {notif.sendAt.toLocaleDateString("en-US", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    }) || ""}
                   </span>
                 </div>
                 <p className="text-text-muted text-sm">{notif.message}</p>
               </motion.div>
             ))}
 
-            {notifications.length === 0 && (
+            {allNotifications.notifications.length === 0 && (
               <div className="rounded-xl border border-border border-dashed p-8 text-center text-text-muted">
                 No announcements sent yet.
               </div>

@@ -35,5 +35,6 @@ export type getAllNotificationsResponse = {
     message: string;
     title: string;
     sendAt: Date;
+    _id: string;
   }[];
 };

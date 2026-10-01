@@ -11,7 +11,7 @@ type Team = {
   members: {
     name: string;
     email: string;
-  };
+  }[];
 };
 
 export type getAllTeamsResponse = {
@@ -38,7 +38,7 @@ export type getAllSubmissionsResponse = {
       name: string;
       email: string;
     }[];
-  };
+  }[];
 };
 
 export type removeMemberFromTeamResponse = {
