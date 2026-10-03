@@ -7,12 +7,11 @@ import HomeRoutes from "./routes/home.route";
 import ParticipantRoutes from "./routes/participant.routes";
 import { dbConnect } from "./config/database";
 const app = express();
-console.log(`${process.env.FRONTEND_URL}`);
 
 app.use(express.json());
 
 app.use(cookieParser());
-const PORT = process.env.PORT || 4000;
+const PORT = Number(process.env.PORT) || 4000;
 
 app.use(
   cors({
@@ -28,6 +27,6 @@ app.use("/api/v1", ParticipantRoutes);
 
 dbConnect();
 
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`App is started at ${PORT} port number`);
 });

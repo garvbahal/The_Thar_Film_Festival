@@ -8,8 +8,8 @@
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
-    "backend:start": "bun run dev --filter=backend",
-    "frontend:start": "bun run dev --filter=web"
+    "backend:start": "bun run start --filter=backend",
+    "frontend:start": "bun run start --filter=web"
   },
   "devDependencies": {
     "prettier": "3.9.6",
