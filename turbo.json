@@ -19,7 +19,17 @@
     },
     "start": {
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "env": [
+        "MONGODB_URL",
+        "FRONTEND_URL",
+        "JWT_SECRET",
+        "MAIL_USER",
+        "NODE_ENV",
+        "PORT",
+        "MAIL_PASS",
+        "MAIL_HOST"
+      ]
     }
   }
 }
