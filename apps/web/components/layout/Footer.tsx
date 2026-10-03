@@ -40,7 +40,7 @@ export default function Footer() {
             </li>
             <li>
               <Link
-                href="/login"
+                href="/auth/login"
                 className="text-sm text-text-main hover:text-accent transition-colors duration-300"
               >
                 Dashboard Login
@@ -48,7 +48,7 @@ export default function Footer() {
             </li>
             <li>
               <Link
-                href="/signup"
+                href="/auth/signup"
                 className="text-sm text-text-main hover:text-accent transition-colors duration-300"
               >
                 Register Crew
@@ -64,18 +64,10 @@ export default function Footer() {
           <ul className="space-y-4">
             <li>
               <a
-                href="mailto:submissions@tharfilm.com"
+                href="mailto:tharfilmfestival@gmail.com"
                 className="text-sm text-text-main hover:text-accent transition-colors duration-300"
               >
-                submissions@tharfilm.com
-              </a>
-            </li>
-            <li>
-              <a
-                href="mailto:press@tharfilm.com"
-                className="text-sm text-text-main hover:text-accent transition-colors duration-300"
-              >
-                press@tharfilm.com
+                tharfilmfestival@gmail.com
               </a>
             </li>
           </ul>

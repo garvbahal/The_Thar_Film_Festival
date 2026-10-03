@@ -3,7 +3,9 @@
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { X } from "lucide-react";
-import { useAuth } from "../../hooks/auth.hooks";
+import { useAuth, useLogout } from "../../hooks/auth.hooks";
+import toast from "react-hot-toast";
+import axios from "axios";
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -18,6 +20,22 @@ const navLinks = [
 
 export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
   const { data, isError } = useAuth();
+  const { mutate, isPending } = useLogout();
+
+  const handleLogout = () => {
+    mutate(undefined, {
+      onSuccess: (data) => {
+        toast.success(data.message);
+      },
+      onError: (error) => {
+        if (axios.isAxiosError(error)) {
+          toast.error(error.response?.data.message);
+        } else {
+          toast.error("Something went wrong");
+        }
+      },
+    });
+  };
 
   const isAuthenticated = !!data;
 
@@ -72,15 +90,30 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
             transition={{ delay: 0.3, duration: 0.5 }}
             className="flex flex-col items-center gap-6 mt-auto pb-12 w-full max-w-sm mx-auto border-t border-border pt-8"
           >
+            {!isAuthenticated && (
+              <Link
+                href="/auth/login"
+                onClick={onClose}
+                className="text-text-muted hover:text-text-main font-mono text-[11px] uppercase tracking-[0.2em] transition-colors"
+              >
+                Login
+              </Link>
+            )}
+            {isAuthenticated && (
+              <button
+                onClick={() => {
+                  onClose();
+                  handleLogout();
+                }}
+                className="text-text-muted hover:text-text-main font-mono text-[11px] uppercase tracking-[0.2em] transition-colors"
+                disabled={isPending}
+              >
+                {isPending ? "Logging Out.." : "Logout"}
+              </button>
+            )}
+
             <Link
-              href="/login"
-              onClick={onClose}
-              className="text-text-muted hover:text-text-main font-mono text-[11px] uppercase tracking-[0.2em] transition-colors"
-            >
-              {isAuthenticated ? "Logout" : "Login"}
-            </Link>
-            <Link
-              href="/signup"
+              href={`${isAuthenticated ? "/dashboard/participant" : "/auth/signup"}`}
               onClick={onClose}
               className="text-accent hover:text-accent-secondary font-mono text-[11px] uppercase tracking-[0.2em] transition-colors"
             >

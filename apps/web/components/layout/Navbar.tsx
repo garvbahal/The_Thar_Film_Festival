@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { Menu } from "lucide-react";
 import MobileMenu from "./MobileMenu";
-import { useAuth } from "../../hooks/auth.hooks";
+import { useAuth, useLogout } from "../../hooks/auth.hooks";
 import toast from "react-hot-toast";
 import axios from "axios";
 
@@ -20,6 +20,22 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const { data, error } = useAuth();
+  const { mutate, isPending } = useLogout();
+
+  const handleLogout = () => {
+    mutate(undefined, {
+      onSuccess: (data) => {
+        toast.success(data.message);
+      },
+      onError: (error) => {
+        if (axios.isAxiosError(error)) {
+          toast.error(error.response?.data.message);
+        } else {
+          toast.error("Something went wrong");
+        }
+      },
+    });
+  };
 
   const isAuthenticated = !!data;
 
@@ -66,14 +82,25 @@ export default function Navbar() {
             </div>
 
             <div className="flex items-center gap-6 pl-8 border-l border-border">
+              {!isAuthenticated && (
+                <Link
+                  href={`/auth/login`}
+                  className="text-text-muted hover:text-text-main font-mono text-[11px] uppercase tracking-[0.2em] transition-colors"
+                >
+                  {isAuthenticated ? "Logout" : "Login"}
+                </Link>
+              )}
+              {isAuthenticated && (
+                <button
+                  disabled={isPending}
+                  className={`text-text-muted hover:text-text-main font-mono text-[11px] uppercase tracking-[0.2em] transition-colors cursor-pointer`}
+                  onClick={handleLogout}
+                >
+                  {isPending ? "Logging Out.." : "Logout"}
+                </button>
+              )}
               <Link
-                href="/auth/login"
-                className="text-text-muted hover:text-text-main font-mono text-[11px] uppercase tracking-[0.2em] transition-colors"
-              >
-                {isAuthenticated ? "Logout" : "Login"}
-              </Link>
-              <Link
-                href="/auth/signup"
+                href={`${isAuthenticated ? "/dashboard/participant" : "/auth/signup"}`}
                 className="text-accent hover:text-accent-secondary font-mono text-[11px] uppercase tracking-[0.2em] transition-colors"
               >
                 {isAuthenticated ? "Dashboard" : "Signup"}
