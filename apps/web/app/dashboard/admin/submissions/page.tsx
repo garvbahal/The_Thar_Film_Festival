@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import {
   Search,
@@ -13,36 +13,19 @@ import Input from "../../../../components/ui/Input";
 import LoadingSpinner from "../../../../components/ui/LoadingSpinner";
 import ErrorState from "../../../../components/ui/ErrorState";
 import EmptyState from "../../../../components/ui/EmptyState";
-import { getAllSubmissions } from "@/lib/services";
-import { Team } from "@/lib/types";
-import { formatDateTime } from "@/lib/utils";
+import { useGetAllSubmissions } from "../../../../hooks/admin.hooks";
+import axios from "axios";
 
 export default function SubmissionsPage() {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [submissions, setSubmissions] = useState<Team[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const fetchSubmissions = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const res = await getAllSubmissions();
-      setSubmissions((res as any).submissions || []);
-    } catch (err: any) {
-      setError(err.message || "Failed to load submissions");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchSubmissions();
-  }, []);
-
-  const filteredSubmissions = submissions.filter((team) =>
-    team.teamName.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
+  const {
+    data: submissionsData,
+    isPending: isSubmissionsPending,
+    isError: isSubmissionError,
+    error: submissionError,
+    refetch: retrySubmissions,
+  } = useGetAllSubmissions();
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -61,7 +44,7 @@ export default function SubmissionsPage() {
     },
   };
 
-  if (loading) {
+  if (isSubmissionsPending) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
         <LoadingSpinner size="lg" />
@@ -69,9 +52,18 @@ export default function SubmissionsPage() {
     );
   }
 
-  if (error) {
-    return <ErrorState description={error} onRetry={fetchSubmissions} />;
+  if (isSubmissionError) {
+    return (
+      <ErrorState
+        description={`${axios.isAxiosError(submissionError) ? submissionError.response?.data.message || "Something went wrong" : "Something went wrong"}`}
+        onRetry={retrySubmissions}
+      />
+    );
   }
+
+  const filteredSubmissions = submissionsData.submissions.filter((team) =>
+    team.teamName.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
 
   return (
     <div className="space-y-6">
@@ -84,7 +76,8 @@ export default function SubmissionsPage() {
             View <span className="text-accent">Submissions</span>
           </h1>
           <p className="mt-2 text-text-muted flex items-center gap-2">
-            <FileVideo size={16} /> Total: {submissions.length} Submissions
+            <FileVideo size={16} /> Total: {submissionsData.submissions.length}{" "}
+            Submissions
           </p>
         </motion.div>
 
@@ -103,7 +96,7 @@ export default function SubmissionsPage() {
         </motion.div>
       </div>
 
-      {submissions.length === 0 ? (
+      {submissionsData.submissions.length === 0 ? (
         <EmptyState
           icon={<FileVideo size={48} />}
           title="No Submissions Yet"
@@ -195,7 +188,14 @@ export default function SubmissionsPage() {
                   <p className="text-xs text-text-muted text-center">
                     Submitted at{" "}
                     {team.submission?.submittedAt
-                      ? formatDateTime(team.submission.submittedAt)
+                      ? new Date(team.submission.submittedAt).toLocaleString(
+                          "en-US",
+                          {
+                            day: "2-digit",
+                            year: "numeric",
+                            month: "short",
+                          },
+                        )
                       : "Unknown"}
                   </p>
                 </div>

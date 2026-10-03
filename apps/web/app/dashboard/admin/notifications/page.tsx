@@ -1,9 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { motion } from "framer-motion";
 import { Bell, Megaphone, CheckCircle2, AlertCircle } from "lucide-react";
 import Input from "../../../../components/ui/Input";
@@ -11,82 +9,43 @@ import Button from "../../../../components/ui/Button";
 import SectionHeading from "../../../../components/ui/SectionHeading";
 import LoadingSpinner from "../../../../components/ui/LoadingSpinner";
 import EmptyState from "../../../../components/ui/EmptyState";
-import { createNotification, getNotifications } from "@/lib/services";
-import { Notification } from "@/lib/types";
-import { formatDateTime } from "@/lib/utils";
+import { useGetAllNotifications } from "../../../../hooks/participant.hooks";
+import axios from "axios";
+import { useSendNotification } from "../../../../hooks/admin.hooks";
+import toast from "react-hot-toast";
 
-const notificationSchema = z.object({
-  title: z
-    .string()
-    .min(3, "Title must be at least 3 characters")
-    .max(100, "Title is too long"),
-  message: z
-    .string()
-    .min(10, "Message must be at least 10 characters")
-    .max(1000, "Message is too long"),
-});
-
-type NotificationFormValues = z.infer<typeof notificationSchema>;
+type NotificationFormValues = {
+  title: string;
+  message: string;
+};
 
 export default function NotificationsPage() {
-  const [loading, setLoading] = useState(true);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [fetchError, setFetchError] = useState<string | null>(null);
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-
   const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<NotificationFormValues>({
-    resolver: zodResolver(notificationSchema),
-  });
+    data: allNotifications,
+    isPending: isAllNotificationsPending,
+    isError: isAllNotificationsError,
+    error: allNotificationsError,
+  } = useGetAllNotifications();
 
-  const fetchNotificationList = async () => {
-    try {
-      setLoading(true);
-      setFetchError(null);
-      const res = await getNotifications();
-      setNotifications((res as any).notifications || []);
-    } catch (err: any) {
-      setFetchError(err.message || "Failed to load notifications");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { mutate: sendNotification, isPending: isSending } =
+    useSendNotification();
 
-  useEffect(() => {
-    fetchNotificationList();
-  }, []);
+  const { register, handleSubmit, reset } = useForm<NotificationFormValues>();
 
-  const onSubmit = async (data: NotificationFormValues) => {
-    try {
-      setIsSubmitting(true);
-      setSubmitError(null);
-      setSubmitSuccess(false);
-
-      await createNotification({
-        title: data.title,
-        message: data.message,
-      });
-
-      setSubmitSuccess(true);
-      reset();
-
-      // Refresh list
-      await fetchNotificationList();
-
-      // Hide success message after 3 seconds
-      setTimeout(() => setSubmitSuccess(false), 3000);
-    } catch (err: any) {
-      setSubmitError(err.message || "Failed to send notification");
-    } finally {
-      setIsSubmitting(false);
-    }
+  const onSubmit = (submitData: NotificationFormValues) => {
+    sendNotification(submitData, {
+      onSuccess: (data) => {
+        toast.success(data.message);
+        reset();
+      },
+      onError: (error) => {
+        if (axios.isAxiosError(error)) {
+          toast.error(error.response?.data.message || "Something went wrong");
+        } else {
+          toast.error("Something went wrong");
+        }
+      },
+    });
   };
 
   return (
@@ -117,7 +76,6 @@ export default function NotificationsPage() {
             label="Title"
             placeholder="E.g., Submission Deadline Extended"
             {...register("title")}
-            error={errors.title?.message}
             icon={<Megaphone size={18} />}
           />
 
@@ -132,30 +90,13 @@ export default function NotificationsPage() {
                 className="w-full min-h-[120px] resize-y rounded-lg border border-border bg-bg-primary px-4 py-3 text-sm text-text-main outline-none transition-all placeholder:text-text-muted focus:border-accent focus:ring-1 focus:ring-accent"
               />
             </div>
-            {errors.message?.message && (
-              <p className="text-xs text-error">{errors.message.message}</p>
-            )}
           </div>
-
-          {submitError && (
-            <div className="flex items-center gap-2 rounded-lg bg-error/10 p-3 text-sm text-error">
-              <AlertCircle size={18} />
-              <p>{submitError}</p>
-            </div>
-          )}
-
-          {submitSuccess && (
-            <div className="flex items-center gap-2 rounded-lg bg-success/10 p-3 text-sm text-success">
-              <CheckCircle2 size={18} />
-              <p>Notification sent successfully!</p>
-            </div>
-          )}
 
           <div className="pt-2">
             <Button
               type="submit"
               variant="primary"
-              isLoading={isSubmitting}
+              isLoading={isSending}
               icon={<Megaphone size={18} />}
             >
               Publish Notification
@@ -172,15 +113,18 @@ export default function NotificationsPage() {
           description="History of all announcements"
         />
 
-        {loading ? (
+        {isAllNotificationsPending ? (
           <div className="flex min-h-[200px] items-center justify-center">
             <LoadingSpinner size="md" />
           </div>
-        ) : fetchError ? (
+        ) : isAllNotificationsError ? (
           <div className="rounded-xl border border-border border-dashed p-8 text-center text-error">
-            {fetchError}
+            {axios.isAxiosError(allNotificationsError)
+              ? allNotificationsError.response?.data.message ||
+                "Something Went wrong"
+              : "Something went wrong"}
           </div>
-        ) : notifications.length === 0 ? (
+        ) : allNotifications.notifications.length === 0 ? (
           <EmptyState
             icon={<Bell size={48} />}
             title="No Announcements Yet"
@@ -188,7 +132,7 @@ export default function NotificationsPage() {
           />
         ) : (
           <div className="space-y-4">
-            {notifications.map((notif, index) => (
+            {allNotifications.notifications.map((notif, index) => (
               <motion.div
                 key={notif._id || index}
                 initial={{ opacity: 0, x: -20 }}
@@ -201,7 +145,11 @@ export default function NotificationsPage() {
                     {notif.title}
                   </h3>
                   <span className="inline-flex items-center rounded-full bg-bg-elevated px-3 py-1 text-xs font-medium text-text-muted">
-                    {formatDateTime(notif.sendAt || "")}
+                    {new Date(notif.sendAt).toLocaleString("en-US", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })}
                   </span>
                 </div>
                 <p className="text-text-muted whitespace-pre-wrap">

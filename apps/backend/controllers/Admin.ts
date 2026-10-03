@@ -11,7 +11,9 @@ import {
 
 export const getAllTeams = async (req: Request, res: Response) => {
   try {
-    const teams = await Team.find().populate("members", "name email").exec();
+    const teams = await Team.find()
+      .populate("members", "name email role _id")
+      .exec();
 
     return res.status(200).json({
       success: true,
@@ -102,8 +104,12 @@ export const removeMemberFromTeam = async (req: Request, res: Response) => {
       });
     }
 
-    if (!team.members.includes(Object(userId))) {
-      return res.status(400).json({
+    const isMember = team.members.some(
+      (memberId) => memberId.toString() === userId,
+    );
+
+    if (!isMember) {
+      return res.status(404).json({
         success: false,
         message: "User is not in team",
       });

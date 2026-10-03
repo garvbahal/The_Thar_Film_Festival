@@ -173,7 +173,7 @@ export default function AdminOverview() {
                     {notif.title}
                   </h3>
                   <span className="text-xs text-text-muted">
-                    {notif.sendAt.toLocaleDateString("en-US", {
+                    {new Date(notif.sendAt).toLocaleDateString("en-US", {
                       day: "numeric",
                       month: "short",
                       year: "numeric",

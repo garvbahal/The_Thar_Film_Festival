@@ -123,7 +123,7 @@ export default function ParticipantDashboard() {
                     {notif.message}
                   </p>
                   <p className="text-xs text-text-muted/60 mt-3">
-                    {notif.sendAt.toLocaleDateString("en-US", {
+                    {new Date(notif.sendAt).toLocaleDateString("en-US", {
                       year: "numeric",
                       day: "numeric",
                       month: "short",

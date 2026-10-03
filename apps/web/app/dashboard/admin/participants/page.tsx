@@ -1,101 +1,75 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Search, Trash2, Users } from "lucide-react";
 import Input from "../../../../components/ui/Input";
 import LoadingSpinner from "../../../../components/ui/LoadingSpinner";
 import ErrorState from "../../../../components/ui/ErrorState";
 import ConfirmationDialog from "../../../../components/ui/ConfirmationDialog";
-import { getAllTeams, removeMember } from "@/lib/services";
-import { Team, TeamMember } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import {
+  useGetAllTeamDetails,
+  useRemoveParticipant,
+} from "../../../../hooks/admin.hooks";
+import axios from "axios";
+import toast from "react-hot-toast";
 
-interface FlattenedParticipant extends TeamMember {
+type FlattenedParticipant = {
   teamId: string;
   teamName: string;
   collegeName: string;
   isLeader: boolean;
-}
+  name: string;
+  email: string;
+  _id: string;
+};
 
 export default function ParticipantsPage() {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [participants, setParticipants] = useState<FlattenedParticipant[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+
+  const {
+    data: allTeamDetails,
+    isError: isAllTeamDetailsError,
+    isPending: isAllTeamDetailsPending,
+    error: allTeamDetailsError,
+    refetch: retryAllTeamDetails,
+  } = useGetAllTeamDetails();
+
+  const { mutate: removeParticipant, isPending: isDeleting } =
+    useRemoveParticipant();
 
   // Delete dialog state
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedParticipant, setSelectedParticipant] =
     useState<FlattenedParticipant | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
-
-  const fetchTeams = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const res = await getAllTeams();
-      const teams = (res as any).teams || [];
-
-      const flatList: FlattenedParticipant[] = [];
-      teams.forEach((team: Team) => {
-        if (team.members && team.members.length > 0) {
-          team.members.forEach((member, index) => {
-            flatList.push({
-              ...member,
-              teamId: team._id,
-              teamName: team.teamName,
-              collegeName: team.collegeName,
-              isLeader: index === 0, // Assumption: first member is leader
-            });
-          });
-        }
-      });
-      setParticipants(flatList);
-    } catch (err: any) {
-      setError(err.message || "Failed to load participants");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchTeams();
-  }, []);
 
   const handleDeleteClick = (participant: FlattenedParticipant) => {
     setSelectedParticipant(participant);
-    setDeleteError(null);
     setIsDialogOpen(true);
   };
 
   const handleConfirmDelete = async () => {
     if (!selectedParticipant) return;
 
-    try {
-      setIsDeleting(true);
-      setDeleteError(null);
-      await removeMember(selectedParticipant.teamId, selectedParticipant._id);
-      setIsDialogOpen(false);
-      // Refresh the list
-      await fetchTeams();
-    } catch (err: any) {
-      setDeleteError(err.message || "Failed to remove participant");
-    } finally {
-      setIsDeleting(false);
-    }
+    removeParticipant(
+      { teamId: selectedParticipant.teamId, userId: selectedParticipant._id },
+      {
+        onSuccess: (data) => {
+          setIsDialogOpen(false);
+          toast.success(data.message);
+        },
+        onError: (error) => {
+          if (axios.isAxiosError(error)) {
+            toast.error(error.response?.data.message || "Something went wrong");
+          } else {
+            toast.error("Something went wrong");
+          }
+        },
+      },
+    );
   };
 
-  const filteredParticipants = participants.filter((p) => {
-    const query = searchQuery.toLowerCase();
-    return (
-      (p.name && p.name.toLowerCase().includes(query)) ||
-      (p.email && p.email.toLowerCase().includes(query))
-    );
-  });
-
-  if (loading) {
+  if (isAllTeamDetailsPending) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
         <LoadingSpinner size="lg" />
@@ -103,9 +77,41 @@ export default function ParticipantsPage() {
     );
   }
 
-  if (error) {
-    return <ErrorState description={error} onRetry={fetchTeams} />;
+  if (isAllTeamDetailsError) {
+    return (
+      <ErrorState
+        description={
+          axios.isAxiosError(allTeamDetailsError)
+            ? allTeamDetailsError.response?.data.message ||
+              "Something went wrong"
+            : "Something went wrong"
+        }
+        onRetry={retryAllTeamDetails}
+      />
+    );
   }
+
+  const participantDetails: FlattenedParticipant[] =
+    allTeamDetails?.teams.flatMap(
+      (team) =>
+        team.members?.map((participant) => ({
+          name: participant.name,
+          email: participant.email,
+          teamId: team._id,
+          teamName: team.teamName,
+          collegeName: team.collegeName,
+          isLeader: participant.role === "leader",
+          _id: participant._id,
+        })) ?? [],
+    ) ?? [];
+
+  const filteredParticipants = participantDetails.filter((p) => {
+    const query = searchQuery.toLowerCase();
+    return (
+      (p.name && p.name.toLowerCase().includes(query)) ||
+      (p.email && p.email.toLowerCase().includes(query))
+    );
+  });
 
   return (
     <div className="space-y-6">
@@ -118,7 +124,7 @@ export default function ParticipantsPage() {
             Manage <span className="text-accent">Participants</span>
           </h1>
           <p className="mt-2 text-text-muted flex items-center gap-2">
-            <Users size={16} /> Total: {participants.length} Participants
+            <Users size={16} /> Total: {participantDetails.length} Participants
           </p>
         </motion.div>
 
@@ -175,12 +181,12 @@ export default function ParticipantsPage() {
                     </td>
                     <td className="whitespace-nowrap px-6 py-4">
                       <span
-                        className={cn(
-                          "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
-                          participant.isLeader
-                            ? "bg-accent/10 text-accent"
-                            : "bg-bg-elevated text-text-muted",
-                        )}
+                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+                          ${
+                            participant.isLeader
+                              ? "bg-accent/10 text-accent"
+                              : "bg-bg-elevated text-text-muted"
+                          }`}
                       >
                         {participant.isLeader ? "Leader" : "Member"}
                       </span>
@@ -226,11 +232,6 @@ export default function ParticipantsPage() {
         variant="danger"
         isLoading={isDeleting}
       />
-      {deleteError && (
-        <div className="mt-4 p-4 rounded-lg bg-error/10 text-error border border-error/20 text-sm">
-          {deleteError}
-        </div>
-      )}
     </div>
   );
 }

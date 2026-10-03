@@ -74,7 +74,7 @@ export default function NotificationsPage() {
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-2">
                   <h3 className="font-semibold text-lg">{notif.title}</h3>
                   <span className="text-xs text-text-muted/60 whitespace-nowrap bg-bg-elevated px-2 py-1 rounded-md">
-                    {notif.sendAt.toLocaleDateString("en-US", {
+                    {new Date(notif.sendAt).toLocaleDateString("en-US", {
                       day: "numeric",
                       year: "numeric",
                       month: "short",

@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getMyAuth,
   loginAuth,
@@ -34,7 +34,13 @@ export const useVerifyOtp = () => {
 };
 
 export const useLogout = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: logoutService,
+    onSuccess: () => {
+      queryClient.removeQueries({
+        queryKey: ["auth"],
+      });
+    },
   });
 };

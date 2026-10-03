@@ -1,4 +1,5 @@
 type Team = {
+  _id: string;
   collegeName: string;
   teamName: string;
   uniqueCode: string;
@@ -11,6 +12,8 @@ type Team = {
   members: {
     name: string;
     email: string;
+    role: "leader" | "member" | "admin";
+    _id: string;
   }[];
 };
 
@@ -27,6 +30,7 @@ export type getTeamDetailsResponse = {
 export type getAllSubmissionsResponse = {
   success: boolean;
   submissions: {
+    _id: string;
     teamName: string;
     collegeName: string;
     submission: {
