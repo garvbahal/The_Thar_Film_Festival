@@ -26,7 +26,7 @@ export default function CTASection() {
           </h2>
 
           <Link
-            href="/signup"
+            href="/auth/signup"
             className="relative group overflow-hidden rounded-full p-[1px]"
           >
             <span className="absolute inset-0 bg-gradient-to-r from-accent/0 via-accent/50 to-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-sm" />

@@ -1,5 +1,6 @@
 "use client";
 import { motion } from "framer-motion";
+import Link from "next/link";
 
 export default function AuthLayout({
   children,
@@ -17,9 +18,12 @@ export default function AuthLayout({
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="relative z-10 flex flex-col h-full p-12 justify-between"
         >
-          <div className="font-heading text-accent text-4xl tracking-wider">
+          <Link
+            href={"/"}
+            className="font-heading text-accent text-4xl tracking-wider"
+          >
             THAR
-          </div>
+          </Link>
           <div className="max-w-md mt-auto mb-auto">
             <h1 className="font-heading text-4xl md:text-5xl text-text-main/80 leading-tight uppercase">
               Stories begin with a single frame.

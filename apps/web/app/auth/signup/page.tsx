@@ -36,7 +36,7 @@ export default function SignupPage() {
       onSuccess: (data) => {
         toast.success(data.message);
         sessionStorage.setItem("email", requestOtpData.email);
-        router.replace("/verify-otp");
+        router.replace("/auth/verify-otp");
       },
       onError: (error) => {
         if (axios.isAxiosError(error)) {
@@ -124,7 +124,7 @@ export default function SignupPage() {
         <p className="text-center text-sm text-text-muted mt-4">
           Already have an account?{" "}
           <Link
-            href="/login"
+            href="/auth/login"
             className="text-accent hover:text-accent-secondary transition-colors"
           >
             Sign in

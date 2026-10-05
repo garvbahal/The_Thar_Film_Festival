@@ -88,7 +88,7 @@ export default function HeroSection() {
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-5 w-full">
               <Link
-                href="/signup"
+                href="/auth/signup"
                 className="w-full sm:w-auto px-10 py-4 rounded-full bg-text-main text-bg-primary font-mono font-medium text-[11px] uppercase tracking-[0.2em] hover:bg-accent hover:text-bg-primary transition-colors duration-300 flex items-center justify-center gap-2"
               >
                 Submit Your Film

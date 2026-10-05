@@ -16,7 +16,7 @@ export default function VerifyOtpPage() {
   useEffect(() => {
     const storedEmail = sessionStorage.getItem("email");
     if (!storedEmail) {
-      router.replace("/signup");
+      router.replace("/auth/signup");
     } else {
       setEmail(storedEmail);
     }
@@ -24,7 +24,9 @@ export default function VerifyOtpPage() {
 
   const { mutate, isPending } = useVerifyOtp();
 
-  const onSubmit = () => {
+  const onOtpSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
     mutate(
       {
         email,
@@ -64,7 +66,7 @@ export default function VerifyOtpPage() {
           </p>
         </div>
 
-        <form onSubmit={onSubmit} className="space-y-6">
+        <form onSubmit={onOtpSubmit} className="space-y-6">
           <div className="flex justify-center">
             <OTPInput value={otp} onChange={setOtp} disabled={isPending} />
           </div>
